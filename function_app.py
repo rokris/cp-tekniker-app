@@ -92,8 +92,8 @@ def CreateDevice(req: func.HttpRequest) -> func.HttpResponse:
     except ValueError:
         return func.HttpResponse("Invalid JSON payload.", status_code=400)
 
-    # Required fields
-    required_fields = ["mac", "role_id", "sponsor_name", "sponsor_profile", "start_time", "expire_time", "username"]
+    # Required fields based on DeviceReplace API
+    required_fields = ["mac", "role_id"]
     missing_fields = [field for field in required_fields if field not in req_body]
     if missing_fields:
         return func.HttpResponse(f"Missing required fields: {', '.join(missing_fields)}", status_code=400)
