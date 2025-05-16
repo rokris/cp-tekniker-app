@@ -79,6 +79,30 @@ src/functions/templates/  # HTML templates for Flask
 - Error handling is implemented for all API calls.
 - Logging and monitoring should be enabled in production deployments.
 
+## Session Management & Security
+- User authentication is required for all device actions. Login is performed via email and a one-time code sent to your email address.
+- Sessions are managed server-side using Flask-Session with filesystem storage. Sessions last for 8 hours or until the user logs out.
+- The logout button in the web UI will immediately end the session.
+- Both the Flask app and Azure Functions backend must be running for the application to work.
+
+## How to Run
+1. **Start the Azure Functions backend:**
+   ```zsh
+   func start
+   ```
+   This will run your Azure Functions locally at `http://localhost:7071`.
+2. **Start the Flask app:**
+   ```zsh
+   python3 src/functions/flask_app.py
+   ```
+   The web UI will be available at `http://127.0.0.1:5000`.
+
+## Requirements
+- All dependencies are listed in `requirements.txt`, including `Flask-Session` for server-side session support. Install with:
+   ```zsh
+   pip install -r requirements.txt
+   ```
+
 ## References
 - [Azure Functions Python Developer Guide](https://docs.microsoft.com/azure/azure-functions/functions-reference-python)
 - [Flask Documentation](https://flask.palletsprojects.com/)

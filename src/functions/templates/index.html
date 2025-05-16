@@ -44,18 +44,90 @@
 </head>
 <body>
     <div class="container">
-        <h2>Get Device Info</h2>
-        <input type="text" id="macaddr" placeholder="Enter MAC Address">
-        <button onclick="getDeviceInfo()">Fetch Info</button>
-        <pre id="getResult"></pre>
-
-        <h2>Create Device</h2>
-        <textarea id="devicePayload" placeholder="Enter JSON Payload"></textarea>
-        <button onclick="createDevice()">Create Device</button>
-        <pre id="postResult"></pre>
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Enter your email">
+        <button onclick="requestAuthCode()">Request Auth Code</button>
+        <input type="text" id="authCode" placeholder="Enter code (e.g. 123-123)">
+        <button onclick="verifyAuthCode()">Login</button>
+        <button onclick="logout()" style="display:none" id="logoutBtn">Logout</button>
+        <pre id="loginResult"></pre>
+        <div id="protectedContent" style="display:none">
+            <h2>Get Device Info</h2>
+            <input type="text" id="macaddr" placeholder="Enter MAC Address">
+            <button onclick="getDeviceInfo()">Fetch Info</button>
+            <pre id="getResult"></pre>
+            <h2>Create Device</h2>
+            <textarea id="devicePayload" placeholder="Enter JSON Payload"></textarea>
+            <button onclick="createDevice()">Create Device</button>
+            <pre id="postResult"></pre>
+        </div>
     </div>
 
     <script>
+        async function requestAuthCode() {
+            const email = document.getElementById('loginEmail').value;
+            const result = document.getElementById('loginResult');
+            result.textContent = 'Requesting code...';
+            try {
+                const response = await fetch('/request_auth_code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    result.textContent = data.message || 'Authentication code sent.';
+                } else {
+                    result.textContent = data.error || 'Failed to send authentication code.';
+                }
+            } catch (error) {
+                result.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function verifyAuthCode() {
+            const email = document.getElementById('loginEmail').value;
+            const code = document.getElementById('authCode').value;
+            const result = document.getElementById('loginResult');
+            result.textContent = 'Verifying...';
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    result.textContent = data.message || 'Login successful.';
+                    setLoggedIn(true);
+                } else {
+                    result.textContent = data.error || 'Login failed.';
+                    setLoggedIn(false);
+                }
+            } catch (error) {
+                result.textContent = `Error: ${error.message}`;
+                setLoggedIn(false);
+            }
+        }
+
+        async function logout() {
+            await fetch('/logout', { method: 'POST' });
+            setLoggedIn(false);
+            document.getElementById('loginResult').textContent = 'Logged out.';
+        }
+
+        function setLoggedIn(loggedIn) {
+            document.getElementById('protectedContent').style.display = loggedIn ? '' : 'none';
+            document.getElementById('logoutBtn').style.display = loggedIn ? '' : 'none';
+        }
+
+        // On page load, check login state from server
+        window.onload = async function() {
+            const res = await fetch('/');
+            const html = await res.text();
+            setLoggedIn(html.includes('logged_in=True'));
+        };
+
         async function getDeviceInfo() {
             const macaddr = document.getElementById('macaddr').value;
             const result = document.getElementById('getResult');

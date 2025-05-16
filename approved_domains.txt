@@ -1,0 +1,2 @@
+# List of pre-approved email domains, one per line
+norgesgruppen.no
