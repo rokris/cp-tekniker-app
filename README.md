@@ -79,9 +79,100 @@ src/functions/templates/  # HTML templates for Flask
 - Error handling is implemented for all API calls.
 - Logging and monitoring should be enabled in production deployments.
 
+## Session Management & Security
+- User authentication is required for all device actions. Login is performed via email and a one-time code sent to your email address.
+- Sessions are managed server-side using Flask-Session with filesystem storage. Sessions last for 8 hours or until the user logs out.
+- The logout button in the web UI will immediately end the session.
+- Both the Flask app and Azure Functions backend must be running for the application to work.
+
+## How to Run
+1. **Start the Azure Functions backend:**
+   ```zsh
+   func start
+   ```
+   This will run your Azure Functions locally at `http://localhost:7071`.
+2. **Start the Flask app:**
+   ```zsh
+   python3 src/functions/flask_app.py
+   ```
+   The web UI will be available at `http://127.0.0.1:5000`.
+
+## Requirements
+- All dependencies are listed in `requirements.txt`, including `Flask-Session` for server-side session support. Install with:
+   ```zsh
+   pip install -r requirements.txt
+   ```
+
 ## References
 - [Azure Functions Python Developer Guide](https://docs.microsoft.com/azure/azure-functions/functions-reference-python)
 - [Flask Documentation](https://flask.palletsprojects.com/)
+
+## Design & Architecture
+- **Frontend:** Flask web app (`src/functions/flask_app.py`) serves the web UI and proxies requests to backend APIs.
+- **Backend:** Azure Functions (`function_app.py`) provide device management and authentication endpoints.
+- **Configuration:** All secrets, URLs, and credentials are stored in a `.env` file and loaded using `python-dotenv`. No secrets or URLs are hardcoded in the source code.
+- **Session Management:** User sessions are managed server-side using Flask-Session with filesystem storage. Sessions last 8 hours or until logout.
+- **Authentication:** Login is required for all device actions. Users authenticate via email and a one-time code sent to their email address. Only pre-approved email domains are allowed (see `approved_domains.txt`).
+- **Email Delivery:** SMTP settings are loaded from the `.env` file. No credentials are hardcoded.
+
+## Security
+- **No hardcoded secrets:** All sensitive values (API URLs, client secrets, SMTP settings, Flask secret key) are loaded from environment variables in `.env`.
+- **Session security:** Flask's `FLASK_SECRET_KEY` is used to sign session cookies. Use a strong, random value in production.
+- **Access control:** All device management endpoints require authentication. Sessions are server-side and expire after 8 hours or on logout.
+- **Email domain allow-list:** Only users with emails from domains listed in `approved_domains.txt` can authenticate.
+- **Logging:** All authentication and API errors are logged for audit and troubleshooting.
+
+## Usage
+1. **Configure environment:**
+   - Copy `.env.example` to `.env` and fill in all required values (see below for keys).
+   - Add your allowed email domains to `approved_domains.txt` (one per line).
+2. **Install dependencies:**
+   ```zsh
+   pip install -r requirements.txt
+   ```
+3. **Start Azure Functions backend:**
+   ```zsh
+   func start
+   ```
+4. **Start Flask app:**
+   ```zsh
+   python3 src/functions/flask_app.py
+   ```
+5. **Access the web UI:**
+   - Go to [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
+   - Login with your email (must be on the allow-list). Enter the code sent to your email.
+   - Once logged in, you can fetch device info or create new devices.
+   - Use the logout button to end your session.
+
+## .env File Example
+```
+BASE_URL=https://clearpass.ngdata.no
+CLIENT_ID=app
+CLIENT_SECRET=your_clearpass_secret
+SMTP_SERVER=ngmailscan.joh.no
+SMTP_PORT=25
+SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
+AZURE_FUNCTION_BASE_URL=http://localhost:7071/api
+FLASK_SECRET_KEY=your_random_secret_key
+```
+
+You can now use SMTP_FROM with a display name for better email deliverability. Example:
+
+```
+SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
+```
+
+The authentication email now includes:
+- A clear sender with display name
+- Greeting, code info, validity, and contact details
+
+This improves quality and reduces the risk of the email being flagged as spam.
+
+## Best Practices
+- **Never commit your `.env` file or secrets to version control.**
+- **Use a strong, random value for `FLASK_SECRET_KEY` in production.**
+- **Rotate credentials regularly and audit logs for suspicious activity.**
+- **Update `approved_domains.txt` as needed to control who can log in.**
 
 ---
 
