@@ -3,6 +3,9 @@ from flask_session import Session
 import requests
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key')  # Use a secure key in production
@@ -13,7 +16,7 @@ app.config['SESSION_COOKIE_NAME'] = 'session'  # Explicitly set session cookie n
 Session(app)
 
 # Configuration for Azure Function endpoints
-AZURE_FUNCTION_BASE_URL = "http://localhost:7071/api"  # Update with actual URL if hosted externally
+AZURE_FUNCTION_BASE_URL = os.environ.get('AZURE_FUNCTION_BASE_URL', 'http://localhost:7071/api')
 
 @app.route('/')
 def home():

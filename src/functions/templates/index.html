@@ -1,164 +1,275 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Management</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f4f4f9;
-        }
-        .container {
-            width: 90%;
-            max-width: 400px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Device Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover:enabled {
+      background-color: #0056b3;
+    }
+
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Toast styles */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .toast {
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      opacity: 0;
+      transform: translateY(-10px);
+      animation: fadeInOut 3s forwards;
+      font-size: 0.95em;
+    }
+
+    .toast.success {
+      background-color: #28a745;
+    }
+
+    .toast.error {
+      background-color: #dc3545;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-10px); }
+      10%, 90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-10px); }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Login</h2>
-        <input type="email" id="loginEmail" placeholder="Enter your email">
-        <button onclick="requestAuthCode()">Request Auth Code</button>
-        <input type="text" id="authCode" placeholder="Enter code (e.g. 123-123)">
-        <button onclick="verifyAuthCode()">Login</button>
-        <button onclick="logout()" style="display:none" id="logoutBtn">Logout</button>
-        <pre id="loginResult"></pre>
-        <div id="protectedContent" style="display:none">
-            <h2>Get Device Info</h2>
-            <input type="text" id="macaddr" placeholder="Enter MAC Address">
-            <button onclick="getDeviceInfo()">Fetch Info</button>
-            <pre id="getResult"></pre>
-            <h2>Create Device</h2>
-            <textarea id="devicePayload" placeholder="Enter JSON Payload"></textarea>
-            <button onclick="createDevice()">Create Device</button>
-            <pre id="postResult"></pre>
-        </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="container">
+    <h2>Login</h2>
+    <div id="loginSection">
+      <input type="email" id="loginEmail" placeholder="Skriv inn e-post" autofocus />
+      <button id="requestAuthBtn" onclick="requestAuthCode()">Be om kode</button>
+      <input type="text" id="authCode" inputmode="numeric" placeholder="Skriv inn kode (f.eks. 123-123)" />
+      <button id="loginBtn" onclick="verifyAuthCode()">Logg inn</button>
     </div>
 
-    <script>
-        async function requestAuthCode() {
-            const email = document.getElementById('loginEmail').value;
-            const result = document.getElementById('loginResult');
-            result.textContent = 'Requesting code...';
-            try {
-                const response = await fetch('/request_auth_code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    result.textContent = data.message || 'Authentication code sent.';
-                } else {
-                    result.textContent = data.error || 'Failed to send authentication code.';
-                }
-            } catch (error) {
-                result.textContent = `Error: ${error.message}`;
-            }
+    <button id="logoutBtn" onclick="logout()" class="hidden">Logg ut</button>
+
+    <div id="protectedContent" class="hidden">
+      <h2>Hent enhetsinfo</h2>
+      <input type="text" id="macaddr" placeholder="Skriv inn MAC-adresse" />
+      <button id="getDeviceInfoBtn" onclick="getDeviceInfo()">Hent info</button>
+      <pre id="getResult"></pre>
+
+      <h2>Opprett enhet</h2>
+      <textarea id="devicePayload" placeholder="Skriv inn JSON-data"></textarea>
+      <button id="createDeviceBtn" onclick="createDevice()">Opprett enhet</button>
+      <pre id="postResult"></pre>
+    </div>
+  </div>
+
+  <script>
+    function showToast(message, type = 'success') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function disableButtons(ids, disabled = true) {
+      ids.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = disabled;
+      });
+    }
+
+    function getHttpStatusMessage(status) {
+      switch (status) {
+        case 400: return 'Ugyldig forespørsel.';
+        case 401: return 'Du må være logget inn.';
+        case 403: return 'Du har ikke tilgang.';
+        case 404: return 'Ressurs ikke funnet.';
+        case 500: return 'Intern serverfeil.';
+        default: return `Feil (${status})`;
+      }
+    }
+
+    async function requestAuthCode() {
+      const email = document.getElementById('loginEmail').value;
+      showToast('Sender kode...');
+      disableButtons(['requestAuthBtn'], true);
+      try {
+        const response = await fetch('/request_auth_code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showToast(data.message || 'Kode sendt.');
+        } else {
+          const msg = data.error || getHttpStatusMessage(response.status);
+          showToast(msg, 'error');
         }
+      } catch (error) {
+        showToast(`Nettverksfeil: ${error.message}`, 'error');
+      }
+      disableButtons(['requestAuthBtn'], false);
+    }
 
-        async function verifyAuthCode() {
-            const email = document.getElementById('loginEmail').value;
-            const code = document.getElementById('authCode').value;
-            const result = document.getElementById('loginResult');
-            result.textContent = 'Verifying...';
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, code })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    result.textContent = data.message || 'Login successful.';
-                    setLoggedIn(true);
-                } else {
-                    result.textContent = data.error || 'Login failed.';
-                    setLoggedIn(false);
-                }
-            } catch (error) {
-                result.textContent = `Error: ${error.message}`;
-                setLoggedIn(false);
-            }
+    async function verifyAuthCode() {
+      const email = document.getElementById('loginEmail').value;
+      const code = document.getElementById('authCode').value;
+      showToast('Verifiserer...');
+      disableButtons(['loginBtn', 'requestAuthBtn'], true);
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showToast(data.message || 'Innlogging vellykket.');
+          setLoggedIn(true);
+        } else {
+          const msg = data.error || getHttpStatusMessage(response.status);
+          showToast(msg, 'error');
+          setLoggedIn(false);
         }
+      } catch (error) {
+        showToast(`Nettverksfeil: ${error.message}`, 'error');
+        setLoggedIn(false);
+      }
+      document.getElementById('authCode').value = '';
+      disableButtons(['loginBtn', 'requestAuthBtn'], false);
+    }
 
-        async function logout() {
-            await fetch('/logout', { method: 'POST' });
-            setLoggedIn(false);
-            document.getElementById('loginResult').textContent = 'Logged out.';
+    async function logout() {
+      disableButtons(['logoutBtn'], true);
+      await fetch('/logout', { method: 'POST' });
+      setLoggedIn(false);
+      showToast('Du er logget ut.');
+      disableButtons(['logoutBtn'], false);
+    }
+
+    function setLoggedIn(loggedIn) {
+      document.getElementById('loginSection').classList.toggle('hidden', loggedIn);
+      document.getElementById('logoutBtn').classList.toggle('hidden', !loggedIn);
+      document.getElementById('protectedContent').classList.toggle('hidden', !loggedIn);
+    }
+
+    async function getDeviceInfo() {
+      const macaddr = document.getElementById('macaddr').value;
+      const result = document.getElementById('getResult');
+      result.textContent = 'Laster...';
+      disableButtons(['getDeviceInfoBtn'], true);
+      try {
+        const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          const userMsg = data.error || getHttpStatusMessage(response.status);
+          showToast(userMsg, 'error');
+          console.error('Serverfeil:', data.details || data);
+          result.textContent = `Feil: ${userMsg}`;
+        } else {
+          result.textContent = JSON.stringify(data, null, 2);
+          showToast('Enhetsinfo hentet.');
         }
+      } catch (error) {
+        result.textContent = `Feil: ${error.message}`;
+        showToast('Nettverksfeil ved henting av enhetsinfo.', 'error');
+        console.error('Uventet feil:', error);
+      }
+      disableButtons(['getDeviceInfoBtn'], false);
+    }
 
-        function setLoggedIn(loggedIn) {
-            document.getElementById('protectedContent').style.display = loggedIn ? '' : 'none';
-            document.getElementById('logoutBtn').style.display = loggedIn ? '' : 'none';
+    async function createDevice() {
+      const payload = document.getElementById('devicePayload').value;
+      const result = document.getElementById('postResult');
+      result.textContent = 'Sender data...';
+      disableButtons(['createDeviceBtn'], true);
+      try {
+        const response = await fetch('/create_device', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+        });
+        const data = await response.json();
+        if (response.ok) {
+          result.textContent = JSON.stringify(data, null, 2);
+          showToast('Enhet opprettet.');
+        } else {
+          const msg = data.error || getHttpStatusMessage(response.status);
+          result.textContent = `Feil: ${msg}`;
+          showToast(msg, 'error');
         }
+      } catch (error) {
+        result.textContent = `Feil: ${error.message}`;
+        showToast(`Feil: ${error.message}`, 'error');
+      }
+      disableButtons(['createDeviceBtn'], false);
+    }
 
-        // On page load, check login state from server
-        window.onload = async function() {
-            const res = await fetch('/');
-            const html = await res.text();
-            setLoggedIn(html.includes('logged_in=True'));
-        };
-
-        async function getDeviceInfo() {
-            const macaddr = document.getElementById('macaddr').value;
-            const result = document.getElementById('getResult');
-            result.textContent = 'Loading...';
-
-            try {
-                const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`);
-                const data = await response.json();
-                result.textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                result.textContent = `Error: ${error.message}`;
-            }
-        }
-
-        async function createDevice() {
-            const payload = document.getElementById('devicePayload').value;
-            const result = document.getElementById('postResult');
-            result.textContent = 'Loading...';
-
-            try {
-                const response = await fetch('/create_device', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: payload
-                });
-                const data = await response.json();
-                result.textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                result.textContent = `Error: ${error.message}`;
-            }
-        }
-    </script>
+    window.onload = () => {
+      setLoggedIn(false);
+      document.getElementById('loginEmail').focus();
+    };
+  </script>
 </body>
 </html>
