@@ -94,10 +94,22 @@ CLIENT_ID=app
 CLIENT_SECRET=ditt_clearpass_secret
 SMTP_SERVER=ngmailscan.joh.no
 SMTP_PORT=25
-SMTP_FROM=cp-noreply@ngdata.no
+SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
 AZURE_FUNCTION_BASE_URL=http://localhost:7071/api
 FLASK_SECRET_KEY=din_tilfeldige_secret_key
 ```
+
+Nå kan du bruke SMTP_FROM med visningsnavn for bedre e-postlevering. Eksempel:
+
+```
+SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
+```
+
+E-posten du mottar vil nå inneholde:
+- En tydelig avsender med visningsnavn
+- Hilsen, informasjon om kode, gyldighet og kontaktinfo
+
+Dette gir bedre kvalitet og mindre risiko for at e-posten havner i spam.
 
 ## Beste praksis
 - **Aldri legg `.env`-filen eller hemmeligheter i versjonskontroll.**

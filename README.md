@@ -151,10 +151,22 @@ CLIENT_ID=app
 CLIENT_SECRET=your_clearpass_secret
 SMTP_SERVER=ngmailscan.joh.no
 SMTP_PORT=25
-SMTP_FROM=cp-noreply@ngdata.no
+SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
 AZURE_FUNCTION_BASE_URL=http://localhost:7071/api
 FLASK_SECRET_KEY=your_random_secret_key
 ```
+
+You can now use SMTP_FROM with a display name for better email deliverability. Example:
+
+```
+SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
+```
+
+The authentication email now includes:
+- A clear sender with display name
+- Greeting, code info, validity, and contact details
+
+This improves quality and reduces the risk of the email being flagged as spam.
 
 ## Best Practices
 - **Never commit your `.env` file or secrets to version control.**
