@@ -87,7 +87,7 @@
     <div id="loginSection">
       <input type="email" id="loginEmail" placeholder="Skriv inn e-post" autofocus />
       <button id="requestAuthBtn" onclick="requestAuthCode()">Be om kode</button>
-      <input type="text" id="authCode" inputmode="numeric" placeholder="Skriv inn kode (f.eks. 123-123)" />
+      <input type="text" id="authCode" inputmode="numeric" placeholder="Skriv inn kode (f.eks. 123-123)" maxlength="7" oninput="formatCodeInput(this)" />
       <button id="loginBtn" onclick="verifyAuthCode()">Logg inn</button>
     </div>
     <button id="logoutBtn" onclick="logout()" class="hidden">Logg ut</button>
@@ -100,6 +100,8 @@
       <label for="roleDropdown">Velg rolle:</label>
       <select id="roleDropdown"></select>
       <textarea id="devicePayload" placeholder="Skriv inn JSON-data"></textarea>
+      <input type="text" id="macInput" placeholder="MAC-adresse (f.eks. 112233445566)" style="display:none;" />
+      <input type="text" id="codeInput" placeholder="Kode (f.eks. 123-456 eller 123456)" style="display:none;" />
       <button id="createDeviceBtn" onclick="createDevice()">Opprett enhet</button>
       <pre id="postResult"></pre>
     </div>
@@ -151,9 +153,18 @@
       }
       disableButtons(['requestAuthBtn'], false);
     }
+    function normalizeCodeInput(code) {
+      // Accepts both 123456 and 123-456, returns 123-456
+      code = code.replace(/[^0-9]/g, '');
+      if (code.length === 6) {
+        return code.slice(0, 3) + '-' + code.slice(3);
+      }
+      return code;
+    }
     async function verifyAuthCode() {
       const email = document.getElementById('loginEmail').value;
-      const code = document.getElementById('authCode').value;
+      let code = document.getElementById('authCode').value;
+      code = normalizeCodeInput(code);
       showToast('Verifiserer...');
       disableButtons(['loginBtn', 'requestAuthBtn'], true);
       try {
@@ -276,6 +287,14 @@
         showToast(`Feil: ${error.message}`, 'error');
       }
       disableButtons(['createDeviceBtn'], false);
+    }
+    function formatCodeInput(input) {
+      // Always show the dash at position 3 as the user types
+      let value = input.value.replace(/[^0-9]/g, '');
+      if (value.length > 3) {
+        value = value.slice(0, 3) + '-' + value.slice(3, 6);
+      }
+      input.value = value;
     }
     window.onload = async () => {
       // Check login state from server
