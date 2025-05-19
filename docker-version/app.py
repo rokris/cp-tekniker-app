@@ -202,5 +202,26 @@ def create_device():
         app.logger.error(f"API request failed: {e}")
         return jsonify({'error': 'Failed to create device.'}), 500
 
+@app.route('/GetDeviceRoles', methods=['GET'])
+def get_device_roles():
+    if not session.get('logged_in') or not session.get('session_token'):
+        return jsonify({'error': 'Authentication required.'}), 401
+    token = get_cached_token()
+    if not token:
+        return jsonify({'error': 'Authentication failed.'}), 500
+    headers = {'Authorization': f'Bearer {token}'}
+    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^ROLE-.*\"}}}}&limit=1000"
+    try:
+        resp = requests.get(api_url, headers=headers)
+        resp.raise_for_status()
+        return jsonify(resp.json()), 200
+    except Exception as e:
+        app.logger.error(f"API request failed: {e}")
+        return jsonify({'error': 'Failed to fetch device roles.'}), 500
+
+@app.route('/is_logged_in', methods=['GET'])
+def is_logged_in():
+    return jsonify({'logged_in': bool(session.get('logged_in'))})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

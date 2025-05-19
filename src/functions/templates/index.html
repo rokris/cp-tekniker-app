@@ -114,6 +114,8 @@
       <pre id="getResult"></pre>
 
       <h2>Opprett enhet</h2>
+      <label for="roleDropdown">Velg rolle:</label>
+      <select id="roleDropdown"></select>
       <textarea id="devicePayload" placeholder="Skriv inn JSON-data"></textarea>
       <button id="createDeviceBtn" onclick="createDevice()">Opprett enhet</button>
       <pre id="postResult"></pre>
@@ -207,10 +209,47 @@
       disableButtons(['logoutBtn'], false);
     }
 
+    async function fetchDeviceRoles() {
+      try {
+        const response = await fetch('/GetDeviceRoles');
+        const data = await response.json();
+        const dropdown = document.getElementById('roleDropdown');
+        dropdown.innerHTML = '';
+        if (Array.isArray(data) && data.length > 0) {
+          data.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.role_id || role.id || role.name;
+            option.textContent = role.name;
+            dropdown.appendChild(option);
+          });
+        } else if (data._embedded && Array.isArray(data._embedded.items)) {
+          data._embedded.items.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.role_id || role.id || role.name;
+            option.textContent = role.name;
+            dropdown.appendChild(option);
+          });
+        } else {
+          const option = document.createElement('option');
+          option.value = '';
+          option.textContent = 'Ingen roller funnet';
+          dropdown.appendChild(option);
+        }
+      } catch (error) {
+        const dropdown = document.getElementById('roleDropdown');
+        dropdown.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Feil ved henting av roller';
+        dropdown.appendChild(option);
+      }
+    }
+
     function setLoggedIn(loggedIn) {
       document.getElementById('loginSection').classList.toggle('hidden', loggedIn);
       document.getElementById('logoutBtn').classList.toggle('hidden', !loggedIn);
       document.getElementById('protectedContent').classList.toggle('hidden', !loggedIn);
+      if (loggedIn) fetchDeviceRoles();
     }
 
     async function getDeviceInfo() {
@@ -266,8 +305,15 @@
       disableButtons(['createDeviceBtn'], false);
     }
 
-    window.onload = () => {
-      setLoggedIn(false);
+    window.onload = async () => {
+      // Check login state from server
+      try {
+        const response = await fetch('/is_logged_in');
+        const data = await response.json();
+        setLoggedIn(data.logged_in === true);
+      } catch (e) {
+        setLoggedIn(false);
+      }
       document.getElementById('loginEmail').focus();
     };
   </script>

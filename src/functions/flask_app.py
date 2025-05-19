@@ -12,7 +12,7 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key')  # Use a s
 app.config['SESSION_TYPE'] = 'filesystem'  # Use server-side session storage
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
-app.config['SESSION_COOKIE_NAME'] = 'session'  # Explicitly set session cookie name for Flask-Session compatibility
+# Remove SESSION_COOKIE_NAME config to avoid AttributeError with Flask-Session
 Session(app)
 
 # Configuration for Azure Function endpoints
@@ -113,6 +113,21 @@ def verify_auth_code():
         if response is not None and response.status_code == 400:
             return jsonify({'error': response.text}), 400
         return jsonify({'error': 'Failed to verify authentication code.', 'details': str(e)}), 500
+
+@app.route('/GetDeviceRoles', methods=['GET'])
+def get_device_roles():
+    if not session.get('logged_in') or not session.get('session_token'):
+        return jsonify({'error': 'Authentication required.'}), 401
+    try:
+        response = requests.get(f"{AZURE_FUNCTION_BASE_URL}/GetDeviceRoles")
+        response.raise_for_status()
+        return jsonify(response.json()), 200
+    except requests.RequestException as e:
+        return jsonify({'error': 'Failed to fetch device roles.', 'details': str(e)}), 500
+
+@app.route('/is_logged_in', methods=['GET'])
+def is_logged_in():
+    return jsonify({'logged_in': bool(session.get('logged_in'))})
 
 if __name__ == '__main__':
     app.run(debug=True)

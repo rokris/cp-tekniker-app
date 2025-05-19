@@ -239,3 +239,22 @@ def VerifyAuthCode(req: func.HttpRequest) -> func.HttpResponse:
     # On success, create a session token (for demo, just return success)
     del auth_code_store[email]
     return func.HttpResponse("Login successful.", status_code=200)
+
+@app.route(route="GetDeviceRoles", methods=["GET", "OPTIONS"])
+def GetDeviceRoles(req: func.HttpRequest) -> func.HttpResponse:
+    if req.method == "OPTIONS":
+        return add_cors_headers(HttpResponse("", status_code=204))
+    logging.info(f"GetDeviceRoles processed a request at {datetime.datetime.now()}")
+    # Get cached token
+    access_token = get_cached_token()
+    if not access_token:
+        return add_cors_headers(func.HttpResponse("Authentication failed.", status_code=500))
+    headers = {"Authorization": f"Bearer {access_token}"}
+    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^ROLE-.*\"}}}}&limit=1000"
+    try:
+        api_response = requests.get(api_url, headers=headers)
+        api_response.raise_for_status()
+        return add_cors_headers(func.HttpResponse(api_response.text, status_code=200))
+    except requests.RequestException as e:
+        logging.error(f"API request failed: {e}")
+        return add_cors_headers(func.HttpResponse("Failed to fetch roles from API.", status_code=500))
