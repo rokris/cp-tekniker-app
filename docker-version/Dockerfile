@@ -1,23 +1,25 @@
-# Use official Python image
+# Use official Python base
 FROM python:3.13.3-alpine
 
-# Set environment variables
+# Environment
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Install dependencies
+# System dependencies for compiling Flask extensions
+RUN apk add --no-cache gcc musl-dev libffi-dev libgcc openssl-dev
+
+# Install Python deps
 COPY requirements.txt .
-RUN apk add --no-cache gcc musl-dev libffi-dev
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code
 COPY . .
 
-# Expose port
-EXPOSE 5000
+# Expose gunicorn port
+EXPOSE 8000
 
-# Run the Flask app
-CMD ["python", "app.py"]
+# Run using Gunicorn (production server)
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]

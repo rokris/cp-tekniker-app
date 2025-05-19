@@ -2,4 +2,4 @@ Flask
 Flask-Session
 requests
 python-dotenv
-# Azure SDKs removed, not needed for Docker version
+gunicorn
