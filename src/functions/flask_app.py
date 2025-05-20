@@ -4,6 +4,7 @@ import requests
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
@@ -14,6 +15,8 @@ app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 # Remove SESSION_COOKIE_NAME config to avoid AttributeError with Flask-Session
 Session(app)
+
+app.logger.setLevel(logging.DEBUG)
 
 # Configuration for Azure Function endpoints
 AZURE_FUNCTION_BASE_URL = os.environ.get('AZURE_FUNCTION_BASE_URL', 'http://localhost:7071/api')
@@ -29,10 +32,13 @@ def login():
     data = request.get_json()
     email = data.get('email', '').strip() if data else ''
     code = data.get('code', '').strip() if data else ''
+    app.logger.info(f"Login attempt for email: {email} with code: {code}")
     if not email or not code:
+        app.logger.warning("Missing email or code in login request")
         return jsonify({'error': 'Email and code are required.'}), 400
     try:
         response = requests.post(f"{AZURE_FUNCTION_BASE_URL}/VerifyAuthCode", json={"email": email, "code": code})
+        app.logger.info(f"VerifyAuthCode response: {response.status_code} {response.text}")
         response.raise_for_status()
         session.permanent = True
         session['logged_in'] = True
@@ -42,6 +48,7 @@ def login():
         session['session_token'] = secrets.token_urlsafe(32)
         return jsonify({'message': 'Login successful.', 'session_token': session['session_token']}), 200
     except requests.RequestException as e:
+        app.logger.error(f"Login failed for {email}: {e}")
         session['logged_in'] = False
         if response is not None and response.status_code == 401:
             return jsonify({'error': 'Invalid code.'}), 401
