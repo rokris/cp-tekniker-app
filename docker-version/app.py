@@ -208,7 +208,7 @@ def get_device_roles():
     if not token:
         return jsonify({'error': 'Authentication failed.'}), 500
     headers = {'Authorization': f'Bearer {token}'}
-    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^ROLE-.*\"}}}}&limit=1000"
+    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^STORE-.*\"}}}}&limit=1000"
     try:
         resp = requests.get(api_url, headers=headers)
         resp.raise_for_status()

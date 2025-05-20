@@ -250,7 +250,7 @@ def GetDeviceRoles(req: func.HttpRequest) -> func.HttpResponse:
     if not access_token:
         return add_cors_headers(func.HttpResponse("Authentication failed.", status_code=500))
     headers = {"Authorization": f"Bearer {access_token}"}
-    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^ROLE-.*\"}}}}&limit=1000"
+    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^STORE-.*\"}}}}&limit=1000"
     try:
         api_response = requests.get(api_url, headers=headers)
         api_response.raise_for_status()
