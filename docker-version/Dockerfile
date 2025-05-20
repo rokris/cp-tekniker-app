@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Legg til PYTHONPATH slik at src/functions er på import-sti
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/src
 
 # System dependencies for compiling Flask extensions
 RUN apk add --no-cache gcc musl-dev libffi-dev libgcc openssl-dev tzdata busybox-extras redis supervisor
