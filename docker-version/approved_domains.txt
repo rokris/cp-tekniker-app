@@ -1,3 +1,0 @@
-# List of pre-approved email domains, one per line
-norgesgruppen.no
-rokris@hotmail.com

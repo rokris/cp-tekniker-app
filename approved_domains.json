@@ -1,0 +1,25 @@
+[
+  {
+    "email": "roger.kristiansen@norgesgruppen.no",
+    "roles": []
+  },
+  {
+    "email": "norgesgruppen.no",
+    "roles": [
+      { "role_id": 9901, "role_name": "STORE-VLAN1" },
+      { "role_id": 9902, "role_name": "STORE-VLAN60" },
+      { "role_id": 9905, "role_name": "STORE-VLAN62" },
+      { "role_id": 9904, "role_name": "STORE-VLAN65 Servicenett" },
+      { "role_id": 9906, "role_name": "STORE-VLAN140 Clients" },
+      { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
+      { "role_id": 9907, "role_name": "STORE-VLAN208" }
+    ]
+  },
+  {
+    "email": "rokris@hotmail.com",
+    "roles": [
+      { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
+      { "role_id": 9906, "role_name": "STORE-VLAN140 Clients" }
+    ]
+  }
+]

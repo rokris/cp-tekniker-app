@@ -9,6 +9,7 @@ import redis
 import smtplib
 from email.mime.text import MIMEText
 import random
+import json
 
 load_dotenv()
 
@@ -31,7 +32,7 @@ redis_client = redis.StrictRedis.from_url(REDIS_URL, decode_responses=True)
 def generate_auth_code():
     return f"{random.randint(100,999)}-{random.randint(100,999)}"
 
-def send_auth_code(email, code):
+def send_auth_code(recipient_email, code):
     smtp_server = os.environ.get('SMTP_SERVER')
     smtp_port = int(os.environ.get('SMTP_PORT', 25))
     from_addr = os.environ.get('SMTP_FROM')
@@ -53,14 +54,38 @@ NorgesGruppen Data AS
 """, _charset="utf-8")
     msg['Subject'] = 'Din engangskode for innlogging'
     msg['From'] = email.utils.formataddr((from_name, from_addr))
-    msg['To'] = email
+    msg['To'] = recipient_email
     try:
+        app.logger.debug(f"SMTP debug: server={smtp_server}, port={smtp_port}, from={from_addr}, to={recipient_email}")
+        app.logger.debug(f"SMTP debug: message=\n{msg.as_string()}")
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.sendmail(from_addr, [email], msg.as_string())
+            server.set_debuglevel(1)
+            server.sendmail(from_addr, [recipient_email], msg.as_string())
         return True
     except Exception as e:
         app.logger.error(f"Failed to send email: {e}")
         return False
+
+def load_approved_domains_and_emails():
+    import os
+    approved_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'approved_domains.json')
+    try:
+        with open(approved_path, "r") as f:
+            domain_data = json.load(f)
+        return domain_data
+    except Exception as e:
+        app.logger.error(f"Failed to load approved domains: {e}")
+        return []
+
+def get_user_roles(email, domain_data):
+    email = email.lower()
+    # Match full email first, then domain
+    for entry in domain_data:
+        if email == entry["email"]:
+            return entry.get("roles", [])
+        if email.endswith("@" + entry["email"]):
+            return entry.get("roles", [])
+    return []
 
 @app.route('/')
 def home():
@@ -127,12 +152,17 @@ def create_device():
 def request_auth_code():
     data = request.get_json()
     email = data.get('email', '').strip() if data else ''
+    app.logger.debug(f"request_auth_code: email={email}")
     if not email:
+        app.logger.debug("request_auth_code: missing email")
         return jsonify({'error': 'Email is required.'}), 400
     code = generate_auth_code()
+    app.logger.debug(f"request_auth_code: generated code={code}")
     # Store code in Redis for 10 minutes
     redis_client.setex(f"auth_code:{email}", 600, code)
-    if send_auth_code(email, code):
+    debug_result = send_auth_code(email, code)
+    app.logger.debug(f"request_auth_code: send_auth_code result={debug_result}")
+    if debug_result:
         return jsonify({'message': 'Authentication code sent.'}), 200
     else:
         return jsonify({'error': 'Failed to send authentication code.'}), 500
@@ -160,11 +190,18 @@ def get_device_roles():
     if not session.get('logged_in') or not session.get('session_token'):
         return jsonify({'error': 'Authentication required.'}), 401
     try:
-        response = requests.get(f"{AZURE_FUNCTION_BASE_URL}/GetDeviceRoles")
+        user_email = session.get('user_email', '').lower()
+        headers = {}
+        if user_email:
+            headers['X-User-Email'] = user_email
+        response = requests.get(f"{AZURE_FUNCTION_BASE_URL}/GetDeviceRoles", headers=headers)
         response.raise_for_status()
         data = response.json()
+        # Filter roller basert på innlogget e-post
+        domain_data = load_approved_domains_and_emails()
+        allowed_roles = get_user_roles(user_email, domain_data)
+        allowed_role_ids = {str(r['role_id']) for r in allowed_roles}
         roles = []
-        # Support both new and old API formats
         rules = data.get('rules') if isinstance(data, dict) else data
         if rules is None:
             rules = []
@@ -172,14 +209,14 @@ def get_device_roles():
             role_name = rule.get('role_name') or rule.get('name')
             role_id = None
             if 'role_id' in rule:
-                role_id = rule['role_id']
+                role_id = str(rule['role_id'])
             else:
                 conditions = rule.get('condition', [])
                 for cond in conditions:
                     if isinstance(cond, dict) and 'value' in cond:
-                        role_id = cond['value']
+                        role_id = str(cond['value'])
                         break
-            if role_name and role_id:
+            if role_name and role_id and (not allowed_role_ids or role_id in allowed_role_ids):
                 roles.append({'name': role_name, 'role_id': role_id})
         return jsonify(roles), 200
     except Exception as e:

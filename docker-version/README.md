@@ -31,6 +31,7 @@ This project is a Dockerized version of the CP-Tekniker device management app. I
 ```
 app.py                  # Main Flask app (all logic, API, and integrations)
 approved_domains.txt    # List of allowed email domains
+approved_domains.json   # List of allowed email domains and roles
 requirements.txt        # Python dependencies
 Dockerfile              # Docker build file
 .env.example            # Example environment config
@@ -40,13 +41,32 @@ Dockerfile              # Docker build file
 ## Security & Best Practices
 - No secrets in code; use `.env` for all config
 - Session and authentication logic is server-side
-- Email domain allow-list in `approved_domains.txt`
+- Email/domain allow-list and roles in `approved_domains.json`
 - Logging for all errors and authentication events
 
 ## Notes
 - This version does **not** require Azure Functions or any Azure SDKs.
 - All backend logic is handled by Flask in the container.
 - SMTP and ClearPass API credentials must be provided in `.env`.
+- Add your allowed email domains and roles to `approved_domains.json` using the following format:
+
+```json
+[
+  {
+    "email": "norgesgruppen.no",
+    "roles": [
+      { "role_id": 1, "role_name": "Admin" },
+      { "role_id": 3, "role_name": "Viewer" }
+    ]
+  },
+  {
+    "email": "rokris@hotmail.com",
+    "roles": [
+      { "role_id": 2, "role_name": "Editor" }
+    ]
+  }
+]
+```
 
 ---
 © 2025 CP-Tekniker. For internal use only.

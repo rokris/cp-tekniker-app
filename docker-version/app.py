@@ -2,6 +2,7 @@ import os
 import random
 import re
 import smtplib
+import json
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from flask import Flask, render_template, request, jsonify, session
@@ -59,20 +60,41 @@ def get_cached_token():
         return None
 
 def load_approved_domains_and_emails():
-    domains, emails = set(), set()
+    """Load pre-approved email domains and full email addresses from JSON file, with roles."""
+    import os
+    approved_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'approved_domains.json')
     try:
-        with open('approved_domains.txt', 'r') as f:
-            for line in f:
-                line = line.strip().lower()
-                if not line or line.startswith('#'):
-                    continue
-                if '@' in line:
-                    emails.add(line)
-                else:
-                    domains.add(line)
+        with open(approved_path, "r") as f:
+            domain_data = json.load(f)
+        approved_domains = []
+        approved_emails = []
+        for entry in domain_data:
+            if "@" in entry["email"]:
+                approved_emails.append(entry["email"].lower())
+            else:
+                approved_domains.append(entry["email"].lower())
+        return approved_domains, approved_emails
     except Exception as e:
         app.logger.error(f"Failed to load approved domains: {e}")
-    return domains, emails
+        return [], []
+
+def get_user_roles(email, domain_data=None):
+    email = email.lower()
+    import os
+    approved_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'approved_domains.json')
+    try:
+        with open(approved_path, "r") as f:
+            full_domain_data = json.load(f)
+        # Sjekk først eksakt e-post, deretter domene
+        for entry in full_domain_data:
+            if email == entry["email"]:
+                return entry.get("roles", [])
+        for entry in full_domain_data:
+            if email.endswith("@" + entry["email"]):
+                return entry.get("roles", [])
+    except Exception as e:
+        app.logger.error(f"Failed to load approved domains for roles: {e}")
+    return []
 
 def is_email_approved(email, approved_domains, approved_emails):
     email = email.lower()
@@ -87,7 +109,8 @@ def is_email_approved(email, approved_domains, approved_emails):
 def generate_auth_code():
     return f"{random.randint(100,999)}-{random.randint(100,999)}"
 
-def send_auth_code(email, code):
+def send_auth_code(recipient_email, code):
+    from_name = os.environ.get('SMTP_FROM_NAME', '')
     msg = MIMEText(f"""
 Hei!
 
@@ -103,11 +126,12 @@ Med vennlig hilsen
 NorgesGruppen Data AS
 """, _charset="utf-8")
     msg['Subject'] = 'Din engangskode for innlogging'
-    msg['From'] = SMTP_FROM
-    msg['To'] = email
+    import email.utils
+    msg['From'] = email.utils.formataddr((from_name, SMTP_FROM))
+    msg['To'] = recipient_email
     try:
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.sendmail(SMTP_FROM, [email], msg.as_string())
+            server.sendmail(SMTP_FROM, [recipient_email], msg.as_string())
         return True
     except Exception as e:
         app.logger.error(f"Failed to send email: {e}")
@@ -213,8 +237,12 @@ def get_device_roles():
         resp = requests.get(api_url, headers=headers)
         resp.raise_for_status()
         data = resp.json()
+        # Filter roller basert på innlogget e-post
+        domain_data = load_approved_domains_and_emails()
+        user_email = session.get('user_email', '').lower()
+        allowed_roles = get_user_roles(user_email, domain_data)
+        allowed_role_ids = {str(r['role_id']) for r in allowed_roles}
         roles = []
-        # Support both new and old API formats
         rules = data.get('rules') if isinstance(data, dict) else data
         if rules is None:
             rules = []
@@ -222,14 +250,14 @@ def get_device_roles():
             role_name = rule.get('role_name') or rule.get('name')
             role_id = None
             if 'role_id' in rule:
-                role_id = rule['role_id']
+                role_id = str(rule['role_id'])
             else:
                 conditions = rule.get('condition', [])
                 for cond in conditions:
                     if isinstance(cond, dict) and 'value' in cond:
-                        role_id = cond['value']
+                        role_id = str(cond['value'])
                         break
-            if role_name and role_id:
+            if role_name and role_id and (not allowed_role_ids or role_id in allowed_role_ids):
                 roles.append({'name': role_name, 'role_id': role_id})
         return jsonify(roles), 200
     except Exception as e:

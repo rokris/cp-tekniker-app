@@ -112,20 +112,38 @@ src/functions/templates/  # HTML templates for Flask
 - **Backend:** Azure Functions (`function_app.py`) provide device management and authentication endpoints.
 - **Configuration:** All secrets, URLs, and credentials are stored in a `.env` file and loaded using `python-dotenv`. No secrets or URLs are hardcoded in the source code.
 - **Session Management:** User sessions are managed server-side using Flask-Session with filesystem storage. Sessions last 8 hours or until logout.
-- **Authentication:** Login is required for all device actions. Users authenticate via email and a one-time code sent to their email address. Only pre-approved email domains are allowed (see `approved_domains.txt`).
+- **Authentication:** Login is required for all device actions. Users authenticate via email and a one-time code sent to their email address. Only pre-approved email domains are allowed (see `approved_domains.json`).
 - **Email Delivery:** SMTP settings are loaded from the `.env` file. No credentials are hardcoded.
 
 ## Security
 - **No hardcoded secrets:** All sensitive values (API URLs, client secrets, SMTP settings, Flask secret key) are loaded from environment variables in `.env`.
 - **Session security:** Flask's `FLASK_SECRET_KEY` is used to sign session cookies. Use a strong, random value in production.
 - **Access control:** All device management endpoints require authentication. Sessions are server-side and expire after 8 hours or on logout.
-- **Email domain allow-list:** Only users with emails from domains listed in `approved_domains.txt` can authenticate.
+- **Email domain allow-list:** Only users with emails or domains listed in `approved_domains.json` can authenticate.
 - **Logging:** All authentication and API errors are logged for audit and troubleshooting.
 
 ## Usage
 1. **Configure environment:**
    - Copy `.env.example` to `.env` and fill in all required values (see below for keys).
-   - Add your allowed email domains to `approved_domains.txt` (one per line).
+   - Add your allowed email domains and roles to `approved_domains.json` using the following format:
+
+```json
+[
+  {
+    "email": "norgesgruppen.no",
+    "roles": [
+      { "role_id": 1, "role_name": "Admin" },
+      { "role_id": 3, "role_name": "Viewer" }
+    ]
+  },
+  {
+    "email": "rokris@hotmail.com",
+    "roles": [
+      { "role_id": 2, "role_name": "Editor" }
+    ]
+  }
+]
+```
 2. **Install dependencies:**
    ```zsh
    pip install -r requirements.txt
@@ -172,7 +190,7 @@ This improves quality and reduces the risk of the email being flagged as spam.
 - **Never commit your `.env` file or secrets to version control.**
 - **Use a strong, random value for `FLASK_SECRET_KEY` in production.**
 - **Rotate credentials regularly and audit logs for suspicious activity.**
-- **Update `approved_domains.txt` as needed to control who can log in.**
+- **Update `approved_domains.json` as needed to control who can log in and which roles are available.**
 
 ---
 
