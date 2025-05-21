@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 import re
 from dotenv import load_dotenv
 import os
+import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -250,11 +251,30 @@ def GetDeviceRoles(req: func.HttpRequest) -> func.HttpResponse:
     if not access_token:
         return add_cors_headers(func.HttpResponse("Authentication failed.", status_code=500))
     headers = {"Authorization": f"Bearer {access_token}"}
-    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^STORE-.*\"}}}}&limit=1000"
+    api_url = f"{BASE_URL}/api/role-mapping/name/[Guest Roles]"
     try:
         api_response = requests.get(api_url, headers=headers)
         api_response.raise_for_status()
-        return add_cors_headers(func.HttpResponse(api_response.text, status_code=200))
-    except requests.RequestException as e:
+        data = api_response.json()
+        roles = []
+        # Support both new and old API formats
+        rules = data.get('rules') if isinstance(data, dict) else data
+        if rules is None:
+            rules = []
+        for rule in rules:
+            role_name = rule.get('role_name') or rule.get('name')
+            role_id = None
+            if 'role_id' in rule:
+                role_id = rule['role_id']
+            else:
+                conditions = rule.get('condition', [])
+                for cond in conditions:
+                    if isinstance(cond, dict) and 'value' in cond:
+                        role_id = cond['value']
+                        break
+            if role_name and role_id:
+                roles.append({'name': role_name, 'role_id': role_id})
+        return add_cors_headers(func.HttpResponse(json.dumps(roles), status_code=200, mimetype="application/json"))
+    except Exception as e:
         logging.error(f"API request failed: {e}")
         return add_cors_headers(func.HttpResponse("Failed to fetch roles from API.", status_code=500))

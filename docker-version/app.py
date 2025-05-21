@@ -208,11 +208,30 @@ def get_device_roles():
     if not token:
         return jsonify({'error': 'Authentication failed.'}), 500
     headers = {'Authorization': f'Bearer {token}'}
-    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^STORE-.*\"}}}}&limit=1000"
+    api_url = f"{BASE_URL}/api/role-mapping/name/[Guest Roles]"
     try:
         resp = requests.get(api_url, headers=headers)
         resp.raise_for_status()
-        return jsonify(resp.json()), 200
+        data = resp.json()
+        roles = []
+        # Support both new and old API formats
+        rules = data.get('rules') if isinstance(data, dict) else data
+        if rules is None:
+            rules = []
+        for rule in rules:
+            role_name = rule.get('role_name') or rule.get('name')
+            role_id = None
+            if 'role_id' in rule:
+                role_id = rule['role_id']
+            else:
+                conditions = rule.get('condition', [])
+                for cond in conditions:
+                    if isinstance(cond, dict) and 'value' in cond:
+                        role_id = cond['value']
+                        break
+            if role_name and role_id:
+                roles.append({'name': role_name, 'role_id': role_id})
+        return jsonify(roles), 200
     except Exception as e:
         app.logger.error(f"API request failed: {e}")
         return jsonify({'error': 'Failed to fetch device roles.'}), 500

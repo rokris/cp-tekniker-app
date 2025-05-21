@@ -35,6 +35,8 @@ def send_auth_code(email, code):
     smtp_server = os.environ.get('SMTP_SERVER')
     smtp_port = int(os.environ.get('SMTP_PORT', 25))
     from_addr = os.environ.get('SMTP_FROM')
+    from_name = os.environ.get('SMTP_FROM_NAME', '')
+    import email.utils
     msg = MIMEText(f"""
 Hei!
 
@@ -50,7 +52,7 @@ Med vennlig hilsen
 NorgesGruppen Data AS
 """, _charset="utf-8")
     msg['Subject'] = 'Din engangskode for innlogging'
-    msg['From'] = from_addr
+    msg['From'] = email.utils.formataddr((from_name, from_addr))
     msg['To'] = email
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
@@ -160,9 +162,29 @@ def get_device_roles():
     try:
         response = requests.get(f"{AZURE_FUNCTION_BASE_URL}/GetDeviceRoles")
         response.raise_for_status()
-        return jsonify(response.json()), 200
-    except requests.RequestException as e:
-        return jsonify({'error': 'Failed to fetch device roles.', 'details': str(e)}), 500
+        data = response.json()
+        roles = []
+        # Support both new and old API formats
+        rules = data.get('rules') if isinstance(data, dict) else data
+        if rules is None:
+            rules = []
+        for rule in rules:
+            role_name = rule.get('role_name') or rule.get('name')
+            role_id = None
+            if 'role_id' in rule:
+                role_id = rule['role_id']
+            else:
+                conditions = rule.get('condition', [])
+                for cond in conditions:
+                    if isinstance(cond, dict) and 'value' in cond:
+                        role_id = cond['value']
+                        break
+            if role_name and role_id:
+                roles.append({'name': role_name, 'role_id': role_id})
+        return jsonify(roles), 200
+    except Exception as e:
+        app.logger.error(f"Failed to fetch device roles: {e}")
+        return jsonify({'error': 'Failed to fetch device roles.'}), 500
 
 @app.route('/is_logged_in', methods=['GET'])
 def is_logged_in():
