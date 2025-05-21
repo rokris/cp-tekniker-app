@@ -84,17 +84,18 @@ def load_approved_domains_and_emails():
         logging.error(f"Failed to load approved domains: {e}")
         return [], []
 
-def get_user_roles(email, domain_data):
+def get_user_roles(email, domain_data=None):
     email = email.lower()
-    # domain_data is now a tuple (approved_domains, approved_emails), so reload the full domain_data for roles
     import os
     approved_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'approved_domains.json')
     try:
         with open(approved_path, "r") as f:
             full_domain_data = json.load(f)
+        # Sjekk først eksakt e-post, deretter domene
         for entry in full_domain_data:
             if email == entry["email"]:
                 return entry.get("roles", [])
+        for entry in full_domain_data:
             if email.endswith("@" + entry["email"]):
                 return entry.get("roles", [])
     except Exception as e:
