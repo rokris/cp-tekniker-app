@@ -116,7 +116,13 @@
       <h2>Opprett enhet</h2>
       <label for="roleDropdown">Velg rolle:</label>
       <select id="roleDropdown"></select>
-      <textarea id="devicePayload" placeholder="Skriv inn JSON-data"></textarea>
+      <label for="visitorName">Navn på enhet:</label>
+      <input type="text" id="visitorName" placeholder="Navn på enhet" />
+      <label for="expireTime">Utløpstid (valgfritt):</label>
+      <input type="datetime-local" id="expireTime" />
+      <label for="enabledCheckbox">
+        <input type="checkbox" id="enabledCheckbox" checked /> Aktivert
+      </label>
       <button id="createDeviceBtn" onclick="createDevice()">Opprett enhet</button>
       <pre id="postResult"></pre>
     </div>
@@ -198,6 +204,7 @@
         if (response.ok) {
           showToast(data.message || 'Innlogging vellykket.');
           setLoggedIn(true);
+          window.loggedInEmail = email;
         } else {
           const msg = data.error || getHttpStatusMessage(response.status);
           showToast(msg, 'error');
@@ -289,7 +296,27 @@
     }
 
     async function createDevice() {
-      const payload = document.getElementById('devicePayload').value;
+      const mac = document.getElementById('macaddr').value.trim();
+      const roleDropdown = document.getElementById('roleDropdown');
+      const role_id = roleDropdown.value;
+      const enabled = document.getElementById('enabledCheckbox').checked;
+      const sponsor_name = (window.loggedInEmail || '');
+      const sponsor_profile = "1";
+      let expire_time = 0;
+      const expireInput = document.getElementById('expireTime').value;
+      if (expireInput) {
+        expire_time = Math.floor(new Date(expireInput).getTime() / 1000);
+      }
+      const visitor_name = document.getElementById('visitorName').value.trim();
+      const payload = {
+        mac,
+        role_id,
+        enabled,
+        sponsor_name,
+        sponsor_profile,
+        expire_time,
+        visitor_name
+      };
       const result = document.getElementById('postResult');
       result.textContent = 'Sender data...';
       disableButtons(['createDeviceBtn'], true);
@@ -297,7 +324,7 @@
         const response = await fetch('/create_device', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: payload
+          body: JSON.stringify(payload)
         });
         const data = await response.json();
         if (response.ok) {

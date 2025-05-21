@@ -9,3 +9,4 @@ azure-storage-blob
 requests
 python-dotenv
 Flask-Session
+redis

@@ -8,6 +8,7 @@ from flask import Flask, render_template, request, jsonify, session
 from flask_session import Session
 import requests
 from dotenv import load_dotenv
+import redis
 
 load_dotenv()
 
@@ -29,8 +30,9 @@ SMTP_SERVER = os.environ.get('SMTP_SERVER')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', 25))
 SMTP_FROM = os.environ.get('SMTP_FROM')
 
-# In-memory store for auth codes (for demo only; use persistent store in production)
-auth_code_store = {}
+# Redis config
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+redis_client = redis.StrictRedis.from_url(REDIS_URL, decode_responses=True)
 
 # Token cache
 token_cache = {'token': None, 'expiry': None}
@@ -125,8 +127,8 @@ def request_auth_code():
     if not is_email_approved(email, approved_domains, approved_emails):
         return jsonify({'error': 'Email or domain is not approved.'}), 403
     code = generate_auth_code()
-    expiry = datetime.now() + timedelta(minutes=10)
-    auth_code_store[email] = (code, expiry)
+    # Store code in Redis for 10 minutes
+    redis_client.setex(f"auth_code:{email}", 600, code)
     if send_auth_code(email, code):
         return jsonify({'message': 'Authentication code sent.'}), 200
     else:
@@ -139,16 +141,12 @@ def login():
     code = data.get('code', '').strip() if data else ''
     if not email or not code:
         return jsonify({'error': 'Email and code are required.'}), 400
-    stored = auth_code_store.get(email)
-    if not stored:
+    stored_code = redis_client.get(f"auth_code:{email}")
+    if not stored_code:
         return jsonify({'error': 'No code requested for this email.'}), 400
-    stored_code, expiry = stored
-    if datetime.now() > expiry:
-        del auth_code_store[email]
-        return jsonify({'error': 'Code expired.'}), 400
     if code != stored_code:
         return jsonify({'error': 'Invalid code.'}), 401
-    del auth_code_store[email]
+    redis_client.delete(f"auth_code:{email}")
     session.permanent = True
     session['logged_in'] = True
     session['user_email'] = email
@@ -210,7 +208,7 @@ def get_device_roles():
     if not token:
         return jsonify({'error': 'Authentication failed.'}), 500
     headers = {'Authorization': f'Bearer {token}'}
-    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^ROLE-.*\"}}}}&limit=1000"
+    api_url = f"{BASE_URL}/api/role?filter={{\"name\":{{\"$regex\":\"^STORE-.*\"}}}}&limit=1000"
     try:
         resp = requests.get(api_url, headers=headers)
         resp.raise_for_status()
