@@ -1,0 +1,21 @@
+[
+  {
+    "email": "norgesgruppen.no",
+    "roles": [
+    ]
+  },
+  {
+    "email": "rokris@norgesgruppen.no",
+    "roles": [
+        { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
+        { "role_id": 9904, "role_name": "STORE-VLAN65 Servicenett" }
+    ]
+  },
+  {
+    "email": "rokris@hotmail.com",
+    "roles": [
+      { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
+      { "role_id": 9904, "role_name": "STORE-VLAN65 Servicenett" }
+    ]
+  }
+]

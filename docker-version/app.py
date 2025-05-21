@@ -2,6 +2,7 @@ import os
 import random
 import re
 import smtplib
+import json
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from flask import Flask, render_template, request, jsonify, session
@@ -59,20 +60,23 @@ def get_cached_token():
         return None
 
 def load_approved_domains_and_emails():
-    domains, emails = set(), set()
+    """Load pre-approved email domains and full email addresses from JSON file, with roles."""
     try:
-        with open('approved_domains.txt', 'r') as f:
-            for line in f:
-                line = line.strip().lower()
-                if not line or line.startswith('#'):
-                    continue
-                if '@' in line:
-                    emails.add(line)
-                else:
-                    domains.add(line)
+        with open("approved_domains.json", "r") as f:
+            domain_data = json.load(f)
+        return domain_data
     except Exception as e:
         app.logger.error(f"Failed to load approved domains: {e}")
-    return domains, emails
+        return []
+
+def get_user_roles(email, domain_data):
+    email = email.lower()
+    for entry in domain_data:
+        if email == entry["email"]:
+            return entry.get("roles", [])
+        if email.endswith("@" + entry["email"]):
+            return entry.get("roles", [])
+    return []
 
 def is_email_approved(email, approved_domains, approved_emails):
     email = email.lower()
@@ -213,8 +217,12 @@ def get_device_roles():
         resp = requests.get(api_url, headers=headers)
         resp.raise_for_status()
         data = resp.json()
+        # Filter roller basert på innlogget e-post
+        domain_data = load_approved_domains_and_emails()
+        user_email = session.get('user_email', '').lower()
+        allowed_roles = get_user_roles(user_email, domain_data)
+        allowed_role_ids = {str(r['role_id']) for r in allowed_roles}
         roles = []
-        # Support both new and old API formats
         rules = data.get('rules') if isinstance(data, dict) else data
         if rules is None:
             rules = []
@@ -222,14 +230,14 @@ def get_device_roles():
             role_name = rule.get('role_name') or rule.get('name')
             role_id = None
             if 'role_id' in rule:
-                role_id = rule['role_id']
+                role_id = str(rule['role_id'])
             else:
                 conditions = rule.get('condition', [])
                 for cond in conditions:
                     if isinstance(cond, dict) and 'value' in cond:
-                        role_id = cond['value']
+                        role_id = str(cond['value'])
                         break
-            if role_name and role_id:
+            if role_name and role_id and (not allowed_role_ids or role_id in allowed_role_ids):
                 roles.append({'name': role_name, 'role_id': role_id})
         return jsonify(roles), 200
     except Exception as e:

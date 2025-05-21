@@ -72,13 +72,13 @@ src/functions/templates/  # HTML-maler for Flask
 
 ## Konfigurasjon
 - Alle hemmeligheter, nøkler og URL-er lagres i `.env`-filen og lastes inn med `python-dotenv`. Ingen hemmeligheter eller URL-er er hardkodet i kildekoden.
-- Oppdater `approved_domains.txt` for å styre hvilke e-postdomener som kan logge inn.
+- Oppdater `approved_domains.json` for å styre hvilke e-postdomener eller adresser som kan logge inn og hvilke roller de får.
 
 ## Sikkerhet & Beste praksis
 - **Ingen hardkodede hemmeligheter:** Alle sensitive verdier (API-URL-er, klientnøkler, SMTP-innstillinger, Flask secret key) lastes fra miljøvariabler i `.env`.
 - **Sesjonssikkerhet:** Flask sin `FLASK_SECRET_KEY` brukes til å signere sesjonskapsler. Bruk en sterk, tilfeldig verdi i produksjon.
 - **Tilgangskontroll:** Alle endepunkter for enhetsadministrasjon krever innlogging. Sesjoner er server-side og utløper etter 8 timer eller ved utlogging.
-- **E-postdomene-whitelist:** Kun brukere med e-post fra domener i `approved_domains.txt` kan logge inn.
+- **E-postdomene-whitelist:** Kun brukere med e-post fra domener eller adresser i `approved_domains.json` kan logge inn.
 - **Logging:** Alle autentiserings- og API-feil logges for revisjon og feilsøking.
 
 ## Sesjonshåndtering
@@ -115,7 +115,26 @@ Dette gir bedre kvalitet og mindre risiko for at e-posten havner i spam.
 - **Aldri legg `.env`-filen eller hemmeligheter i versjonskontroll.**
 - **Bruk en sterk, tilfeldig verdi for `FLASK_SECRET_KEY` i produksjon.**
 - **Roter nøkler jevnlig og sjekk logger for mistenkelig aktivitet.**
-- **Oppdater `approved_domains.txt` etter behov for å styre hvem som kan logge inn.**
+- **Oppdater `approved_domains.json` etter behov for å styre hvem som kan logge inn og hvilke roller som er tilgjengelige.**
+   - Legg til dine tillatte e-postdomener og roller i `approved_domains.json` med følgende format:
+
+```json
+[
+  {
+    "email": "norgesgruppen.no",
+    "roles": [
+      { "role_id": 1, "role_name": "Admin" },
+      { "role_id": 3, "role_name": "Viewer" }
+    ]
+  },
+  {
+    "email": "rokris@hotmail.com",
+    "roles": [
+      { "role_id": 2, "role_name": "Editor" }
+    ]
+  }
+]
+```
 
 ---
 
