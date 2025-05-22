@@ -63,6 +63,28 @@
   <script>
     lucide.createIcons();
 
+    // ENTER key triggers correct button in login modal
+    document.addEventListener('DOMContentLoaded', function() {
+      const emailInput = document.getElementById('loginEmail');
+      const codeInput = document.getElementById('authCode');
+      const requestAuthBtn = document.getElementById('requestAuthBtn');
+      const loginBtn = document.getElementById('loginBtn');
+      const loginModal = document.getElementById('loginModal');
+
+      emailInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && emailInput.value && !requestAuthBtn.disabled && !loginModal.classList.contains('hidden')) {
+          e.preventDefault();
+          requestAuthBtn.click();
+        }
+      });
+      codeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && codeInput.value && !loginBtn.disabled && !loginModal.classList.contains('hidden')) {
+          e.preventDefault();
+          loginBtn.click();
+        }
+      });
+    });
+
     function showToast(message, type = "success") {
       const toastContainer = document.getElementById("toastContainer");
       const toast = document.createElement("div");
