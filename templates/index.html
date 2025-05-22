@@ -60,6 +60,22 @@
     </div>
   </div>
 
+  <div id="deviceInfoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative">
+      <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> Enhetsinfo</h2>
+      <pre id="deviceInfoPopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"></pre>
+      <button id="closeDeviceInfoBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Lukk</button>
+    </div>
+  </div>
+
+  <div id="createDeviceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative">
+      <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> Enhet opprettet</h2>
+      <pre id="createDevicePopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"></pre>
+      <button id="closeCreateDeviceBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Lukk</button>
+    </div>
+  </div>
+
   <script>
     lucide.createIcons();
 
@@ -83,6 +99,16 @@
           loginBtn.click();
         }
       });
+
+      const closeBtn = document.getElementById('closeDeviceInfoBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closeDeviceInfoModal);
+      }
+
+      const closeCreateBtn = document.getElementById('closeCreateDeviceBtn');
+      if (closeCreateBtn) {
+        closeCreateBtn.addEventListener('click', closeCreateDeviceModal);
+      }
     });
 
     function showToast(message, type = "success") {
@@ -188,7 +214,8 @@
         const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`);
         const data = await response.json();
         if (response.ok) {
-          result.textContent = JSON.stringify(data, null, 2);
+          // Vis popup med pen JSON
+          showDeviceInfoModal(data);
           showToast("Enhetsinfo hentet.");
         } else {
           showToast(data.error || "Feil", "error");
@@ -199,6 +226,20 @@
         showToast("Nettverksfeil", "error");
       }
       disableButtons(["getDeviceInfoBtn"], false);
+    }
+
+    function showDeviceInfoModal(data) {
+      const modal = document.getElementById("deviceInfoModal");
+      const content = document.getElementById("deviceInfoPopupContent");
+      content.textContent = JSON.stringify(data, null, 2);
+      modal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeDeviceInfoModal() {
+      const modal = document.getElementById("deviceInfoModal");
+      modal.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
     }
 
     async function createDevice() {
@@ -222,7 +263,7 @@
         });
         const data = await response.json();
         if (response.ok) {
-          result.textContent = JSON.stringify(data, null, 2);
+          showCreateDeviceModal(data);
           showToast("Enhet opprettet.");
         } else {
           result.textContent = "Feil: " + (data.error || "");
@@ -233,6 +274,20 @@
         showToast("Nettverksfeil", "error");
       }
       disableButtons(["createDeviceBtn"], false);
+    }
+
+    function showCreateDeviceModal(data) {
+      const modal = document.getElementById("createDeviceModal");
+      const content = document.getElementById("createDevicePopupContent");
+      content.textContent = JSON.stringify(data, null, 2);
+      modal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeCreateDeviceModal() {
+      const modal = document.getElementById("createDeviceModal");
+      modal.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
     }
 
     window.onload = async () => {
