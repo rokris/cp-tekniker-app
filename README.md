@@ -1,197 +1,122 @@
-# CP-Tekniker Device Management App
+# CP-Tekniker Device Management App (Docker/Flask)
 
-This project is a web-based device management application built with Flask (Python) and Azure Functions. It allows users to fetch device information and create new device entries using a simple web interface. The backend leverages Azure Functions for scalable, serverless API endpoints.
+A modern, secure, and user-friendly device management web application for NorgesGruppen, built with Flask and designed to run exclusively in Docker. This app allows authenticated users to fetch device information and create new device entries via a clean web interface, with robust role-based access control and email authentication.
+
+---
 
 ## Features
-- **Get Device Info:** Query device details by MAC address.
-- **Create Device:** Submit new device data via JSON payload.
-- **Modern UI:** Clean, responsive web interface.
-- **Azure Integration:** Uses Azure Functions for backend logic.
+- **Email-based authentication**: Secure login using one-time codes sent to approved emails.
+- **Role-based access**: Device management actions filtered by user roles, with exact email match prioritized over domain match.
+- **Device info & creation**: Fetch device details by MAC address and create new device entries.
+- **Modern UI**: Responsive, accessible web interface (Tailwind CSS, Lucide icons).
+- **Robust configuration**: All settings via `.env` and `approved_domains.json`.
+- **Runs in Docker**: Simple, reproducible deployment with built-in process management (supervisord).
+
+---
 
 ## How It Works
-- The Flask app (`src/functions/flask_app.py`) serves the web UI and acts as a proxy to Azure Functions.
-- The web UI (`src/functions/templates/index.html`) lets users input a MAC address or device JSON payload.
-- When a user submits a request, the Flask app forwards it to the appropriate Azure Function endpoint (e.g., `/GetDeviceInfo`, `/CreateDevice`).
-- Azure Functions process the request and return the result, which is displayed in the web UI.
+1. **Authentication**: Users log in with their email. If the email or its domain is approved, a one-time code is sent via email. Upon entering the code, a session is established.
+2. **Role Filtering**: User roles are determined by exact email match (if present in `approved_domains.json`), otherwise by domain match. Roles control which device actions are available.
+3. **Device Management**: Authenticated users can fetch device info by MAC address and create new device entries, subject to their allowed roles.
 
-## Project Structure
-```
-function_app.py           # Azure Functions entry point
-host.json                 # Azure Functions host configuration
-local.settings.json       # Local settings for Azure Functions
-requirements.txt          # Python dependencies
-src/functions/flask_app.py# Flask web server
-src/functions/templates/  # HTML templates for Flask
-```
+---
 
-## Prerequisites
-- Python 3.8+
-- [Azure Functions Core Tools](https://docs.microsoft.com/azure/azure-functions/functions-run-local) (for local development)
-- [Node.js & npm](https://nodejs.org/) (if using JavaScript/TypeScript Azure Functions)
-- macOS (but works cross-platform)
+## Quick Start (Docker)
 
-## Setup & Usage
 1. **Clone the repository:**
-   ```zsh
+   ```sh
    git clone <your-repo-url>
    cd cp-tekniker-app
    ```
-2. **Install Python dependencies:**
-   ```zsh
-   pip install -r requirements.txt
+2. **Configure environment:**
+   - Edit `.env` with your ClearPass API and SMTP settings (see below).
+   - Edit `approved_domains.json` to specify allowed emails/domains and their roles.
+3. **Build and run with Docker:**
+   ```sh
+   docker build -t cp-tekniker-app .
+   docker run -p 8000:8000 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json cp-tekniker-app
    ```
-3. **Start Azure Functions host:**
-   ```zsh
-   func start
-   ```
-   This will run your Azure Functions locally at `http://localhost:7071`.
-4. **Run the Flask app:**
-   ```zsh
-   python src/functions/flask_app.py
-   ```
-   The web UI will be available at `http://127.0.0.1:5000`.
+   The app will be available at [http://localhost:8000](http://localhost:8000)
 
-## Usage Example
-- **Get Device Info:**
-  1. Enter a MAC address in the input field.
-  2. Click "Fetch Info" to retrieve device details from Azure Functions.
-- **Create Device:**
-  1. Enter a valid JSON payload in the textarea. Example:
-     ```json
-     {
-       "mac": "EE-BB-CC-AA-BB-CC",
-       "role_id": "3228",
-       "enabled": true,
-       "sponsor_name": "roger",
-       "sponsor_profile": "1",
-       "expire_time": 0,
-       "visitor_name": "TEST Device"
-     }
-     ```
-  2. Click "Create Device" to submit the data to Azure Functions.
+---
 
-## Configuration
-- Update `AZURE_FUNCTION_BASE_URL` in `flask_app.py` if your Azure Functions are hosted externally.
-- Use `local.settings.json` to manage local Azure Function settings.
+## Configuration Files
 
-## Security & Best Practices
-- No credentials are hardcoded; use Azure Managed Identity or Key Vault for secrets in production.
-- Error handling is implemented for all API calls.
-- Logging and monitoring should be enabled in production deployments.
-
-## Session Management & Security
-- User authentication is required for all device actions. Login is performed via email and a one-time code sent to your email address.
-- Sessions are managed server-side using Flask-Session with filesystem storage. Sessions last for 8 hours or until the user logs out.
-- The logout button in the web UI will immediately end the session.
-- Both the Flask app and Azure Functions backend must be running for the application to work.
-
-## How to Run
-1. **Start the Azure Functions backend:**
-   ```zsh
-   func start
-   ```
-   This will run your Azure Functions locally at `http://localhost:7071`.
-2. **Start the Flask app:**
-   ```zsh
-   python3 src/functions/flask_app.py
-   ```
-   The web UI will be available at `http://127.0.0.1:5000`.
-
-## Requirements
-- All dependencies are listed in `requirements.txt`, including `Flask-Session` for server-side session support. Install with:
-   ```zsh
-   pip install -r requirements.txt
-   ```
-
-## References
-- [Azure Functions Python Developer Guide](https://docs.microsoft.com/azure/azure-functions/functions-reference-python)
-- [Flask Documentation](https://flask.palletsprojects.com/)
-
-## Design & Architecture
-- **Frontend:** Flask web app (`src/functions/flask_app.py`) serves the web UI and proxies requests to backend APIs.
-- **Backend:** Azure Functions (`function_app.py`) provide device management and authentication endpoints.
-- **Configuration:** All secrets, URLs, and credentials are stored in a `.env` file and loaded using `python-dotenv`. No secrets or URLs are hardcoded in the source code.
-- **Session Management:** User sessions are managed server-side using Flask-Session with filesystem storage. Sessions last 8 hours or until logout.
-- **Authentication:** Login is required for all device actions. Users authenticate via email and a one-time code sent to their email address. Only pre-approved email domains are allowed (see `approved_domains.json`).
-- **Email Delivery:** SMTP settings are loaded from the `.env` file. No credentials are hardcoded.
-
-## Security
-- **No hardcoded secrets:** All sensitive values (API URLs, client secrets, SMTP settings, Flask secret key) are loaded from environment variables in `.env`.
-- **Session security:** Flask's `FLASK_SECRET_KEY` is used to sign session cookies. Use a strong, random value in production.
-- **Access control:** All device management endpoints require authentication. Sessions are server-side and expire after 8 hours or on logout.
-- **Email domain allow-list:** Only users with emails or domains listed in `approved_domains.json` can authenticate.
-- **Logging:** All authentication and API errors are logged for audit and troubleshooting.
-
-## Usage
-1. **Configure environment:**
-   - Copy `.env.example` to `.env` and fill in all required values (see below for keys).
-   - Add your allowed email domains and roles to `approved_domains.json` using the following format:
-
-```json
-[
-  {
-    "email": "norgesgruppen.no",
-    "roles": [
-      { "role_id": 1, "role_name": "Admin" },
-      { "role_id": 3, "role_name": "Viewer" }
-    ]
-  },
-  {
-    "email": "rokris@hotmail.com",
-    "roles": [
-      { "role_id": 2, "role_name": "Editor" }
-    ]
-  }
-]
-```
-2. **Install dependencies:**
-   ```zsh
-   pip install -r requirements.txt
-   ```
-3. **Start Azure Functions backend:**
-   ```zsh
-   func start
-   ```
-4. **Start Flask app:**
-   ```zsh
-   python3 src/functions/flask_app.py
-   ```
-5. **Access the web UI:**
-   - Go to [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
-   - Login with your email (must be on the allow-list). Enter the code sent to your email.
-   - Once logged in, you can fetch device info or create new devices.
-   - Use the logout button to end your session.
-
-## .env File Example
+### `.env`
+Environment variables for API, SMTP, and Flask settings. Example:
 ```
 BASE_URL=https://clearpass.ngdata.no
 CLIENT_ID=app
 CLIENT_SECRET=your_clearpass_secret
 SMTP_SERVER=ngmailscan.joh.no
 SMTP_PORT=25
-SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
-AZURE_FUNCTION_BASE_URL=http://localhost:7071/api
-FLASK_SECRET_KEY=your_random_secret_key
+SMTP_FROM=cp-noreply@ngdata.no
+SMTP_FROM_NAME=NorgesGruppen ClearPass kode
+FLASK_SECRET_KEY=your_flask_secret
 ```
 
-You can now use SMTP_FROM with a display name for better email deliverability. Example:
-
+### `approved_domains.json`
+Defines which emails and domains are allowed, and their associated roles. Example:
 ```
-SMTP_FROM="NorgesGruppen ClearPass kode <cp-noreply@ngdata.no>"
+[
+  { "email": "user1@company.com", "roles": [ { "role_id": 9901, "role_name": "STORE-VLAN1" } ] },
+  { "email": "company.com", "roles": [ { "role_id": 9902, "role_name": "STORE-VLAN60" } ] }
+]
 ```
+- **Exact email match** takes priority over domain match.
+- Each entry's `roles` array determines which device roles the user can access.
 
-The authentication email now includes:
-- A clear sender with display name
-- Greeting, code info, validity, and contact details
+### `Dockerfile`
+Builds a minimal, production-ready Python/Flask image with all dependencies and supervisord for process management.
 
-This improves quality and reduces the risk of the email being flagged as spam.
+### `supervisord.conf`
+Runs both Redis and the Flask app (via Gunicorn) in the same container.
 
-## Best Practices
-- **Never commit your `.env` file or secrets to version control.**
-- **Use a strong, random value for `FLASK_SECRET_KEY` in production.**
-- **Rotate credentials regularly and audit logs for suspicious activity.**
-- **Update `approved_domains.json` as needed to control who can log in and which roles are available.**
+### `requirements.txt`
+Python dependencies for the app (Flask, Flask-Session, requests, redis, etc).
+
+### `templates/index.html`
+Modern, responsive web UI for device management.
 
 ---
 
-© 2025 CP-Tekniker. For internal use only.
+## File/Folder Structure
+```
+app.py                # Main Flask app (all backend logic)
+approved_domains.json # Approved emails/domains and roles
+.env                  # Environment variables (not committed)
+Dockerfile            # Docker build instructions
+requirements.txt      # Python dependencies
+templates/index.html  # Web UI template
+supervisord.conf      # Process management (runs Redis + Flask)
+```
+
+---
+
+## Security & Best Practices
+- **No passwords stored**: Authentication is via one-time code only.
+- **Session security**: Sessions are server-side, expire after 8 hours, and are cleared on logout.
+- **Role filtering**: Only users/emails in `approved_domains.json` can log in; roles are strictly enforced.
+- **Environment config**: All secrets and sensitive info are in `.env` (never commit this file).
+- **Absolute paths**: The app always loads `approved_domains.json` by absolute path to avoid file errors.
+- **Logging**: Debug logging for authentication and email sending is enabled.
+
+---
+
+## Usage
+1. **Login**: Enter your approved email. Check your inbox for a one-time code and enter it to log in.
+2. **Fetch device info**: Enter a MAC address and click "Hent info".
+3. **Create device**: Select a role, enter device details, and submit.
+4. **Logout**: Click the "Logg ut" button to end your session.
+
+---
+
+## Troubleshooting
+- **Email not received?** Check SMTP settings in `.env` and ensure your email/domain is in `approved_domains.json`.
+- **Role not available?** Ensure your email or domain has the correct roles assigned in `approved_domains.json`.
+- **File not found errors?** The app expects `approved_domains.json` to be present in the container at `/app/approved_domains.json`.
+
+---
+
+## License
+Proprietary. For use by NorgesGruppen and authorized personnel only.
