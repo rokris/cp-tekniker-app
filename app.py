@@ -61,7 +61,7 @@ def get_cached_token():
         token_cache["expiry"] = now + timedelta(seconds=expires_in)
         return token_cache["token"]
     except Exception as e:
-        app.logger.error(f"Failed to get token: {e}")
+        app.logger.error(f"Kunne ikke hente token: {e}")
         return None
 
 
@@ -84,7 +84,7 @@ def load_approved_domains_and_emails():
                 approved_domains.append(entry["email"].lower())
         return approved_domains, approved_emails
     except Exception as e:
-        app.logger.error(f"Failed to load approved domains: {e}")
+        app.logger.error(f"Kunne ikke laste godkjente domener: {e}")
         return [], []
 
 
@@ -106,7 +106,7 @@ def get_user_roles(email, domain_data=None):
             if email.endswith("@" + entry["email"]):
                 return entry.get("roles", [])
     except Exception as e:
-        app.logger.error(f"Failed to load approved domains for roles: {e}")
+        app.logger.error(f"Kunne ikke laste godkjente domener for roller: {e}")
     return []
 
 
@@ -174,7 +174,7 @@ NorgesGruppen Data AS
             server.send_message(msg)
         return True
     except Exception as e:
-        app.logger.error(f"Failed to send email: {e}")
+        app.logger.error(f"Kunne ikke sende e-post: {e}")
         return False
 
 
@@ -188,17 +188,17 @@ def request_auth_code():
     data = request.get_json()
     email = data.get("email", "").strip() if data else ""
     if not email:
-        return jsonify({"error": "Email is required."}), 400
+        return jsonify({"error": "E-postadresse er påkrevd."}), 400
     approved_domains, approved_emails = load_approved_domains_and_emails()
     if not is_email_approved(email, approved_domains, approved_emails):
-        return jsonify({"error": "Email or domain is not approved."}), 403
+        return jsonify({"error": "E-postadresse eller domene er ikke godkjent."}), 403
     code = generate_auth_code()
     # Store code in Redis for 10 minutes
     redis_client.setex(f"auth_code:{email}", 600, code)
     if send_auth_code(email, code):
-        return jsonify({"message": "Authentication code sent."}), 200
+        return jsonify({"message": "Autentiseringskode sendt."}), 200
     else:
-        return jsonify({"error": "Failed to send authentication code."}), 500
+        return jsonify({"error": "Kunne ikke sende autentiseringskode."}), 500
 
 
 @app.route("/login", methods=["POST"])
@@ -207,12 +207,12 @@ def login():
     email = data.get("email", "").strip() if data else ""
     code = data.get("code", "").strip() if data else ""
     if not email or not code:
-        return jsonify({"error": "Email and code are required."}), 400
+        return jsonify({"error": "E-postadresse og kode er påkrevd."}), 400
     stored_code = redis_client.get(f"auth_code:{email}")
     if not stored_code:
-        return jsonify({"error": "No code requested for this email."}), 400
+        return jsonify({"error": "Ingen kode er forespurt for denne e-postadressen."}), 400
     if code != stored_code:
-        return jsonify({"error": "Invalid code."}), 401
+        return jsonify({"error": "Ugyldig kode."}), 401
     redis_client.delete(f"auth_code:{email}")
     session.permanent = True
     session["logged_in"] = True
@@ -222,7 +222,7 @@ def login():
     session["session_token"] = secrets.token_urlsafe(32)
     return (
         jsonify(
-            {"message": "Login successful.", "session_token": session["session_token"]}
+            {"message": "Innlogging vellykket.", "session_token": session["session_token"]}
         ),
         200,
     )
@@ -231,19 +231,19 @@ def login():
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
-    return jsonify({"message": "Logged out."}), 200
+    return jsonify({"message": "Logget ut."}), 200
 
 
 @app.route("/get_device_info", methods=["GET"])
 def get_device_info():
     if not session.get("logged_in") or not session.get("session_token"):
-        return jsonify({"error": "Authentication required."}), 401
+        return jsonify({"error": "Autentisering kreves."}), 401
     macaddr = request.args.get("macaddr")
     if not macaddr:
-        return jsonify({"error": "MAC address is required."}), 400
+        return jsonify({"error": "MAC-adresse er påkrevd."}), 400
     token = get_cached_token()
     if not token:
-        return jsonify({"error": "Authentication failed."}), 500
+        return jsonify({"error": "Autentisering feilet."}), 500
     headers = {"Authorization": f"Bearer {token}"}
     api_url = f"{BASE_URL}/api/device/mac/{macaddr}"
     try:
@@ -251,21 +251,21 @@ def get_device_info():
         resp.raise_for_status()
         return jsonify(resp.json())
     except Exception as e:
-        app.logger.error(f"API request failed: {e}")
-        return jsonify({"error": "Failed to fetch device info."}), 500
+        app.logger.error(f"API-forespørsel feilet: {e}")
+        return jsonify({"error": "Kunne ikke hente enhetsinformasjon."}), 500
 
 
 @app.route("/create_device", methods=["POST"])
 def create_device():
     if not session.get("logged_in") or not session.get("session_token"):
-        return jsonify({"error": "Authentication required."}), 401
+        return jsonify({"error": "Autentisering kreves."}), 401
     payload = request.json
     required_fields = ["mac", "role_id"]
     if not payload or any(f not in payload for f in required_fields):
-        return jsonify({"error": f"Missing required fields: {required_fields}"}), 400
+        return jsonify({"error": f"Påkrevde felt mangler: {required_fields}"}), 400
     token = get_cached_token()
     if not token:
-        return jsonify({"error": "Authentication failed."}), 500
+        return jsonify({"error": "Autentisering feilet."}), 500
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     api_url = f"{BASE_URL}/api/device"
     try:
@@ -273,17 +273,17 @@ def create_device():
         resp.raise_for_status()
         return jsonify(resp.json()), 201
     except Exception as e:
-        app.logger.error(f"API request failed: {e}")
-        return jsonify({"error": "Failed to create device."}), 500
+        app.logger.error(f"API-forespørsel feilet: {e}")
+        return jsonify({"error": "Kunne ikke opprette enhet."}), 500
 
 
 @app.route("/GetDeviceRoles", methods=["GET"])
 def get_device_roles():
     if not session.get("logged_in") or not session.get("session_token"):
-        return jsonify({"error": "Authentication required."}), 401
+        return jsonify({"error": "Autentisering kreves."}), 401
     token = get_cached_token()
     if not token:
-        return jsonify({"error": "Authentication failed."}), 500
+        return jsonify({"error": "Autentisering feilet."}), 500
     headers = {"Authorization": f"Bearer {token}"}
     api_url = f"{BASE_URL}/api/role-mapping/name/[Guest Roles]"
     try:
@@ -318,8 +318,8 @@ def get_device_roles():
                 roles.append({"name": role_name, "role_id": role_id})
         return jsonify(roles), 200
     except Exception as e:
-        app.logger.error(f"API request failed: {e}")
-        return jsonify({"error": "Failed to fetch device roles."}), 500
+        app.logger.error(f"API-forespørsel feilet: {e}")
+        return jsonify({"error": "Kunne ikke hente enhetsroller."}), 500
 
 
 @app.route("/is_logged_in", methods=["GET"])
