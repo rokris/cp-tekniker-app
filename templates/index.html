@@ -34,7 +34,7 @@
             <button id="getDeviceInfoBtn" onclick="getDeviceInfo()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg">Hent info</button>
             <button id="createDeviceBtn" onclick="createDevice()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg">Opprett enhet</button>
           </div>
-          <pre id="getResult" class="mt-2 text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded"></pre>
+          <div id="mainResult" class="mt-2 text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded"></div>
         </div>
 
         <div>
@@ -46,7 +46,6 @@
           <label class="inline-flex items-center gap-2 mt-2">
             <input type="checkbox" id="enabledCheckbox" checked class="h-4 w-4" /> Aktivert
           </label>
-          <pre id="postResult" class="mt-2 text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded"></pre>
         </div>
       </div>
     </div>
@@ -144,6 +143,7 @@
           body: JSON.stringify({ email })
         });
         const data = await response.json();
+        document.getElementById("authCode").value = ""; // Tøm kodefeltet etter innsending
         if (response.ok) showToast(data.message || "Kode sendt.");
         else showToast(data.error || "Feil", "error");
       } catch (e) {
@@ -154,7 +154,8 @@
 
     async function verifyAuthCode() {
       const email = document.getElementById("loginEmail").value;
-      const code = document.getElementById("authCode").value.replace(/[^0-9]/g, "").replace(/(.{3})/, "$1-");
+      const codeInput = document.getElementById("authCode");
+      const code = codeInput.value.replace(/[^0-9]/g, "").replace(/(.{3})/, "$1-");
       showToast("Verifiserer...");
       disableButtons(["loginBtn", "requestAuthBtn"]);
       try {
@@ -164,6 +165,7 @@
           body: JSON.stringify({ email, code })
         });
         const data = await response.json();
+        codeInput.value = ""; // Tøm kodefeltet etter vellykket innlogging eller forsøk
         if (response.ok) {
           showToast("Innlogging vellykket.");
           window.loggedInEmail = email;
@@ -209,9 +211,9 @@
 
     async function getDeviceInfo() {
       const macaddr = document.getElementById("macaddr").value;
-      const result = document.getElementById("getResult");
+      const result = document.getElementById("mainResult");
       result.textContent = "Laster...";
-      disableButtons(["getDeviceInfoBtn"]);
+      disableButtons(["getDeviceInfoBtn", "createDeviceBtn"]);
       try {
         const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`);
         const data = await response.json();
@@ -219,6 +221,7 @@
           // Vis popup med pen JSON
           showDeviceInfoModal(data);
           showToast("Enhetsinfo hentet.");
+          result.textContent = "";
         } else {
           showToast(data.error || "Feil", "error");
           result.textContent = "Feil: " + (data.error || "");
@@ -227,7 +230,7 @@
         result.textContent = "Feil: " + e.message;
         showToast("Nettverksfeil", "error");
       }
-      disableButtons(["getDeviceInfoBtn"], false);
+      disableButtons(["getDeviceInfoBtn", "createDeviceBtn"], false);
     }
 
     function showDeviceInfoModal(data) {
@@ -254,9 +257,9 @@
       const sponsor_profile = "1";
       const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
       const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
-      const result = document.getElementById("postResult");
+      const result = document.getElementById("mainResult");
       result.textContent = "Sender...";
-      disableButtons(["createDeviceBtn"]);
+      disableButtons(["createDeviceBtn", "getDeviceInfoBtn"]);
       try {
         const response = await fetch("/create_device", {
           method: "POST",
@@ -267,6 +270,7 @@
         if (response.ok) {
           showCreateDeviceModal(data);
           showToast("Enhet opprettet.");
+          result.textContent = "";
         } else {
           result.textContent = "Feil: " + (data.error || "");
           showToast(data.error || "Feil", "error");
@@ -275,7 +279,7 @@
         result.textContent = "Feil: " + e.message;
         showToast("Nettverksfeil", "error");
       }
-      disableButtons(["createDeviceBtn"], false);
+      disableButtons(["createDeviceBtn", "getDeviceInfoBtn"], false);
     }
 
     function showCreateDeviceModal(data) {
