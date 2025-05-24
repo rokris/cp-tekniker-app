@@ -11,6 +11,10 @@ from flask_session import Session
 import requests
 from dotenv import load_dotenv
 import redis
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from redis import Redis
+from flask_limiter.errors import RateLimitExceeded
 
 load_dotenv()
 
@@ -38,6 +42,13 @@ redis_client = redis.StrictRedis.from_url(REDIS_URL, decode_responses=True)
 
 # Token cache
 token_cache = {"token": None, "expiry": None}
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    storage_uri=REDIS_URL
+    # Ikke sett default_limits hvis du vil ha ubegrenset som default
+)
 
 
 def get_cached_token():
@@ -184,6 +195,7 @@ def home():
 
 
 @app.route("/request_auth_code", methods=["POST"])
+@limiter.limit("5 per minute;20 per hour")
 def request_auth_code():
     data = request.get_json()
     email = data.get("email", "").strip() if data else ""
@@ -202,6 +214,7 @@ def request_auth_code():
 
 
 @app.route("/login", methods=["POST"])
+@limiter.limit("10 per minute;30 per hour")
 def login():
     data = request.get_json()
     email = data.get("email", "").strip() if data else ""
@@ -327,5 +340,31 @@ def is_logged_in():
     return jsonify({"logged_in": bool(session.get("logged_in"))})
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+@app.errorhandler(RateLimitExceeded)
+def handle_rate_limit(e):
+    retry_after = None
+    # Flask-Limiter 3.x: e.retry_after er alltid korrekt hvis satt
+    if hasattr(e, 'retry_after') and e.retry_after:
+        retry_after = int(e.retry_after)
+    else:
+        # Siste utvei: prøv å parse Retry-After header fra responsen
+        retry_after_header = request.headers.get('Retry-After')
+        if retry_after_header:
+            try:
+                retry_after = int(retry_after_header)
+            except Exception:
+                retry_after = None
+        # Siste utvei: prøv å parse siste tall i e.description
+        if retry_after is None:
+            import re as _re
+            match = _re.search(r'(\d+)$', str(e.description))
+            if match:
+                retry_after = int(match.group(1))
+    # Hvis retry_after ikke er funnet, sett til 60 sekunder som fallback
+    if retry_after is None:
+        retry_after = 60
+    message = f"Du har nådd grensen for antall forespørsler. Du kan prøve igjen om {retry_after} sekunder."
+    return jsonify({
+        "error": message,
+        "retry_after": retry_after
+    }), 429

@@ -100,6 +100,7 @@ supervisord.conf      # Process management (runs Redis + Flask)
 - **Environment config**: All secrets and sensitive info are in `.env` (never commit this file).
 - **Absolute paths**: The app always loads `approved_domains.json` by absolute path to avoid file errors.
 - **Logging**: Debug logging for authentication and email sending is enabled.
+- **Rate limiting**: Beskytter innlogging og kodeforespørsel mot brute force-angrep med Flask-Limiter.
 
 ---
 
@@ -120,3 +121,19 @@ supervisord.conf      # Process management (runs Redis + Flask)
 
 ## License
 Proprietary. For use by NorgesGruppen and authorized personnel only.
+
+## Krav og avhengigheter
+
+- Python 3.8+
+- Flask
+- Flask-Session
+- Flask-Limiter  
+- requests
+- python-dotenv
+- gunicorn
+- redis
+
+Installer alle avhengigheter med:
+```sh
+pip install -r requirements.txt
+```
