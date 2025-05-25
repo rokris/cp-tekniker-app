@@ -84,6 +84,42 @@ static/
 - **.env**: Environment variables for API, SMTP, and Flask.
 - **approved_domains.json**: List of approved emails/domains and their roles.
 
+### About approved_domains.json
+
+The `approved_domains.json` file defines which emails and domains are approved for login, and which roles they have access to. Each entry can be an exact email address or a domain, and has an associated list of roles.
+
+**Example content:**
+
+```json
+[
+  {
+    "email": "roger.kristiansen@norgesgruppen.no",
+    "roles": []
+  },
+  {
+    "email": "norgesgruppen.no",
+    "roles": [
+      { "role_id": 9901, "role_name": "STORE-VLAN1" },
+      { "role_id": 9902, "role_name": "STORE-VLAN60" }
+    ]
+  },
+  {
+    "email": "rokris@hotmail.com",
+    "roles": [
+      { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
+      { "role_id": 9906, "role_name": "STORE-VLAN140 Clients" }
+    ]
+  }
+]
+```
+
+- If "email" contains a full email address, the entry applies only to that user.
+- If "email" is just a domain (e.g. `norgesgruppen.no`), the entry applies to all users with an email in that domain.
+- "roles" is a list of objects defining which ClearPass roles the user or domain has access to.
+- Exact email match always takes precedence over domain match.
+
+This provides flexible and secure control over who can log in and which roles they are granted.
+
 ---
 
 ## For Developers

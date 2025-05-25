@@ -82,15 +82,92 @@ static/
 ## Konfigurasjonsfiler
 
 - **.env**: Miljøvariabler for API, SMTP og Flask.
+
+  **Eksempel på .env:**
+  ```env
+  BASE_URL=https://clearpass.ngdata.no
+  CLIENT_ID=app
+  CLIENT_SECRET=your_clearpass_secret
+  SMTP_SERVER=ngmailscan.joh.no
+  SMTP_PORT=25
+  SMTP_FROM=cp-noreply@ngdata.no
+  SMTP_FROM_NAME=NorgesGruppen ClearPass kode
+  FLASK_SECRET_KEY=your_flask_secret
+  REDIS_URL=redis://localhost:6379/0
+  ```
+
 - **approved_domains.json**: Liste over godkjente e-poster/domener og tilhørende roller.
+
+  ### Om approved_domains.json
+  Filen `approved_domains.json` definerer hvilke e-poster og domener som er godkjent for innlogging, og hvilke roller de har tilgang til. Hver oppføring kan være en eksakt e-postadresse eller et domene, og har en tilhørende liste med roller.
+
+  **Eksempel på innhold:**
+  ```json
+  [
+    {
+      "email": "roger.kristiansen@norgesgruppen.no",
+      "roles": []
+    },
+    {
+      "email": "norgesgruppen.no",
+      "roles": [
+        { "role_id": 9901, "role_name": "STORE-VLAN1" },
+        { "role_id": 9902, "role_name": "STORE-VLAN60" }
+      ]
+    },
+    {
+      "email": "rokris@hotmail.com",
+      "roles": [
+        { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
+        { "role_id": 9906, "role_name": "STORE-VLAN140 Clients" }
+      ]
+    }
+  ]
+  ```
+  - Hvis "email" inneholder en full e-postadresse, gjelder oppføringen kun for denne brukeren.
+  - Hvis "email" kun er et domene (f.eks. `norgesgruppen.no`), gjelder oppføringen for alle brukere med e-post i dette domenet.
+  - "roles" er en liste med objekter som definerer hvilke ClearPass-roller brukeren eller domenet har tilgang til.
+  - Eksakt e-postmatch har alltid høyere prioritet enn domenematch.
+
+  Dette gir fleksibel og sikker styring av hvem som kan logge inn og hvilke roller de får tilgang til.
+
+- **Dockerfile**: Bygger et minimalt, produksjonsklart Python/Flask-image med alle avhengigheter og supervisord for prosesshåndtering. Sikrer at appen kjører likt i alle miljøer.
+
+- **supervisord.conf**: Konfigurerer supervisord til å starte både Redis og Flask-appen (via Gunicorn) i samme container. Gir robust prosesshåndtering og enkel oppstart.
+
+- **requirements.txt**: Lister alle Python-avhengigheter for prosjektet (f.eks. Flask, Flask-Session, requests, redis, python-dotenv, gunicorn). Brukes av Dockerfile og ved lokal utvikling.
+
+- **templates/index.html**: Frontend for appen. Moderne, responsivt webgrensesnitt med Tailwind CSS og Lucide-ikoner. Kommuniserer med backend via definerte API-endepunkter.
+
+- **config.py**: Sentral konfigurasjonsfil for hele applikasjonen. Leser inn miljøvariabler fra .env og gjør dem tilgjengelig via Config-klassen. Brukes for styring av API-nøkler, SMTP, Redis, osv.
 
 ---
 
-## For utviklere
+## Hvordan virker det?
 
-- All backend-logikk er delt opp i moduler og blueprints for enkel videreutvikling.
-- Nye funksjoner bør legges til i riktig modul (auth, clearpass, utils).
-- Frontend (index.html) kommuniserer kun med backend via definerte endepunkter.
+1. **Innlogging**: Brukeren skriver inn e-post. Hvis e-post/domene er godkjent, sendes en engangskode. Koden tastes inn for å logge inn.
+2. **Rollehenting**: Etter innlogging hentes kun de rollene brukeren har tilgang til (eksakt e-post har høyest prioritet).
+3. **Enhetsadministrasjon**: Brukeren kan hente info om enheter eller opprette nye, avhengig av sine roller.
+4. **Rate limiting**: Alle sensitive endepunkter er beskyttet mot misbruk.
+
+---
+
+## Slik kommer du i gang (Docker)
+
+1. **Klon repoet:**
+   ```sh
+   git clone <repo-url>
+   cd cp-tekniker-app
+   ```
+2. **Konfigurer miljø:**
+   - Rediger `.env` med ClearPass API- og SMTP-innstillinger.
+   - Rediger `approved_domains.json` for å angi tillatte e-poster/domener og roller.
+3. **Bygg og start med Docker:**
+   ```sh
+   docker build -t cp-tekniker-app .
+   docker run -p 8000:8000 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json cp-tekniker-app
+   ```
+   Appen er tilgjengelig på [http://localhost:8000](http://localhost:8000)
 
 ---
 
