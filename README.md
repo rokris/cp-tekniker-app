@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/favicon.png" width="90" alt="Hovedlogo"/>
+</p>
+
 # CP-Tekniker Enhetsadministrasjonsapp
 
 En moderne, sikker og brukervennlig enhetsadministrasjonsløsning for NorgesGruppen, bygget med Flask og designet for Docker. Appen er nå modulært organisert for enkel videreutvikling og samarbeid.
@@ -121,10 +125,6 @@ Dette gir deg en levende, interaktiv oversikt over alle API-endepunkter og datam
 ---
 
 ## Om logoen og symbolikken
-
-<p align="center">
-  <img src="static/favicon.png" width="90" alt="Hovedlogo"/>
-</p>
 
 Vår logo består av fire fargede kvadranter som sammen illustrerer kjerneområdene til nettverksgruppen:
 

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/favicon.png" width="90" alt="Logo"/>
+</p>
+
 # CP-Tekniker Device Management App
 
 A modern, secure, and user-friendly device management solution for NorgesGruppen, built with Flask and designed for Docker. The app is now modular and ready for collaborative development.
