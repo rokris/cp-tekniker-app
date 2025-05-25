@@ -105,18 +105,18 @@ static/
   ```json
   [
     {
-      "email": "roger.kristiansen@norgesgruppen.no",
+      "email": "ola.normann@firma.no",
       "roles": []
     },
     {
-      "email": "norgesgruppen.no",
+      "email": "firma.no",
       "roles": [
         { "role_id": 9901, "role_name": "STORE-VLAN1" },
         { "role_id": 9902, "role_name": "STORE-VLAN60" }
       ]
     },
     {
-      "email": "rokris@hotmail.com",
+      "email": "ola_normann@hotmail.com",
       "roles": [
         { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
         { "role_id": 9906, "role_name": "STORE-VLAN140 Clients" }
@@ -125,7 +125,7 @@ static/
   ]
   ```
   - Hvis "email" inneholder en full e-postadresse, gjelder oppføringen kun for denne brukeren.
-  - Hvis "email" kun er et domene (f.eks. `norgesgruppen.no`), gjelder oppføringen for alle brukere med e-post i dette domenet.
+  - Hvis "email" kun er et domene (f.eks. `firma.no`), gjelder oppføringen for alle brukere med e-post i dette domenet.
   - "roles" er en liste med objekter som definerer hvilke ClearPass-roller brukeren eller domenet har tilgang til.
   - Eksakt e-postmatch har alltid høyere prioritet enn domenematch.
 

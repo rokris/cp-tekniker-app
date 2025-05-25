@@ -93,18 +93,18 @@ The `approved_domains.json` file defines which emails and domains are approved f
 ```json
 [
   {
-    "email": "roger.kristiansen@norgesgruppen.no",
+    "email": "ola.normann@firma.no",
     "roles": []
   },
   {
-    "email": "norgesgruppen.no",
+    "email": "firma.no",
     "roles": [
       { "role_id": 9901, "role_name": "STORE-VLAN1" },
       { "role_id": 9902, "role_name": "STORE-VLAN60" }
     ]
   },
   {
-    "email": "rokris@hotmail.com",
+    "email": "ola_normann@hotmail.com",
     "roles": [
       { "role_id": 9903, "role_name": "STORE-VLAN151 Kundenett" },
       { "role_id": 9906, "role_name": "STORE-VLAN140 Clients" }
@@ -114,7 +114,7 @@ The `approved_domains.json` file defines which emails and domains are approved f
 ```
 
 - If "email" contains a full email address, the entry applies only to that user.
-- If "email" is just a domain (e.g. `norgesgruppen.no`), the entry applies to all users with an email in that domain.
+- If "email" is just a domain (e.g. `firma.no`), the entry applies to all users with an email in that domain.
 - "roles" is a list of objects defining which ClearPass roles the user or domain has access to.
 - Exact email match always takes precedence over domain match.
 
