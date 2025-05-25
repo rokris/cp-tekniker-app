@@ -1,125 +1,125 @@
-# CP-Tekniker Device Management App
+# CP-Tekniker Enhetsadministrasjonsapp
 
-A modern, secure, and user-friendly device management solution for NorgesGruppen, built with Flask and designed for Docker. The app is now modular and ready for collaborative development.
-
----
-
-## Main Features
-
-- **Email-based authentication** with one-time code
-- **Role-based access**: Actions filtered by user roles (exact email > domain match)
-- **Fetch and create device**: Search by MAC address, create new devices
-- **Rate limiting**: Protects against abuse
-- **Modern UI**: Tailwind CSS, Lucide icons
-- **Runs in Docker**: Simple, reproducible deployment
+En moderne, sikker og brukervennlig enhetsadministrasjonsløsning for NorgesGruppen, bygget med Flask og designet for Docker. Appen er nå modulært organisert for enkel videreutvikling og samarbeid.
 
 ---
 
-## New Folder & Module Structure
+## Hovedfunksjoner
+
+- **E-postbasert autentisering** med engangskode
+- **Rollebasert tilgang**: Handlinger filtreres etter brukerens roller (eksakt e-post > domenematch)
+- **Hent og opprett enhet**: Søk på MAC-adresse, opprett nye enheter
+- **Rate limiting**: Beskytter mot misbruk
+- **Moderne UI**: Tailwind CSS, Lucide-ikoner
+- **Kjører i Docker**: Enkel og reproduserbar utrulling
+
+---
+
+## Ny mappe- og modulstruktur
 
 ```
-app.py                  # Flask app entrypoint, blueprint registration, error handler
-config.py               # All configuration and .env handling
-approved_domains.json   # Approved emails/domains and roles
-requirements.txt        # Python dependencies
-Dockerfile              # Docker build instructions
-supervisord.conf        # Runs Redis and Flask app in same container
+app.py                  # Flask-appens entrypoint, blueprint-registrering, error handler
+config.py               # All konfigurasjon og .env-håndtering
+approved_domains.json   # Godkjente e-poster/domener og roller
+requirements.txt        # Python-avhengigheter
+Dockerfile              # Docker-byggeinstruksjoner
+supervisord.conf        # Kjører Redis og Flask-app i samme container
 
-auth/                   # Authentication and rate limiting
+auth/                   # Autentisering og rate limiting
     limiter.py          # Flask-Limiter setup (Redis)
-    routes.py           # Auth endpoints (Blueprint)
-    utils.py            # Auth helper functions
+    routes.py           # Auth-endepunkter (Blueprint)
+    utils.py            # Auth-hjelpefunksjoner
 
-clearpass/              # ClearPass API and role logic
-    api.py              # API calls and device endpoints (Blueprint)
-    roles.py            # Role and domain handling
-    routes.py           # Role endpoint (Blueprint)
+clearpass/              # ClearPass API og rollelogikk
+    api.py              # API-kall og device-endepunkter (Blueprint)
+    roles.py            # Rolle- og domenehåndtering
+    routes.py           # Rolle-endepunkt (Blueprint)
 
 utils/
-    redis.py            # Redis client
+    redis.py            # Redis-klient
 
 templates/
     index.html          # Frontend
 
 static/
-    favicon.ico/png     # Icons
+    favicon.ico/png     # Ikoner
 ```
 
 ---
 
-## How does it work?
+## Hvordan virker det?
 
-1. **Login**: User enters email. If email/domain is approved, a one-time code is sent. Entering the code logs in the user.
-2. **Role fetching**: After login, only the roles the user has access to are fetched (exact email has highest priority).
-3. **Device management**: User can fetch device info or create new devices, depending on their roles.
-4. **Rate limiting**: All sensitive endpoints are protected against abuse.
+1. **Innlogging**: Brukeren skriver inn e-post. Hvis e-post/domene er godkjent, sendes en engangskode. Koden tastes inn for å logge inn.
+2. **Rollehenting**: Etter innlogging hentes kun de rollene brukeren har tilgang til (eksakt e-post har høyest prioritet).
+3. **Enhetsadministrasjon**: Brukeren kan hente info om enheter eller opprette nye, avhengig av sine roller.
+4. **Rate limiting**: Alle sensitive endepunkter er beskyttet mot misbruk.
 
 ---
 
-## Getting Started (Docker)
+## Slik kommer du i gang (Docker)
 
-1. **Clone the repo:**
+1. **Klon repoet:**
    ```sh
    git clone <repo-url>
    cd cp-tekniker-app
    ```
-2. **Configure environment:**
-   - Edit `.env` with your ClearPass API and SMTP settings.
-   - Edit `approved_domains.json` to specify allowed emails/domains and roles.
-3. **Build and run with Docker:**
+2. **Konfigurer miljø:**
+   - Rediger `.env` med ClearPass API- og SMTP-innstillinger.
+   - Rediger `approved_domains.json` for å angi tillatte e-poster/domener og roller.
+3. **Bygg og start med Docker:**
    ```sh
    docker build -t cp-tekniker-app .
    docker run -p 8000:8000 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json cp-tekniker-app
    ```
-   The app will be available at [http://localhost:8000](http://localhost:8000)
+   Appen er tilgjengelig på [http://localhost:8000](http://localhost:8000)
 
 ---
 
-## Configuration Files
+## Konfigurasjonsfiler
 
-- **.env**: Environment variables for API, SMTP, and Flask.
-- **approved_domains.json**: List of approved emails/domains and their roles.
-
----
-
-## For Developers
-
-- All backend logic is split into modules and blueprints for easy further development.
-- New features should be added to the correct module (auth, clearpass, utils).
-- The frontend (index.html) communicates only with the backend via defined endpoints.
+- **.env**: Miljøvariabler for API, SMTP og Flask.
+- **approved_domains.json**: Liste over godkjente e-poster/domener og tilhørende roller.
 
 ---
 
-## Security & Best Practices
+## For utviklere
 
-- No passwords stored, only one-time code
-- Sessions are server-side and expire after 8 hours
-- Roles are strictly enforced
-- Rate limiting on all sensitive endpoints
-- All configuration in `.env` (never in git)
+- All backend-logikk er delt opp i moduler og blueprints for enkel videreutvikling.
+- Nye funksjoner bør legges til i riktig modul (auth, clearpass, utils).
+- Frontend (index.html) kommuniserer kun med backend via definerte endepunkter.
 
 ---
 
-## Troubleshooting
+## Sikkerhet og beste praksis
 
-- **Not receiving email?** Check SMTP settings and that your email/domain is in `approved_domains.json`.
-- **Role missing?** Check that your email/domain has the correct roles in `approved_domains.json`.
-- **File not found?** The app expects `approved_domains.json` to be present in the container at `/app/approved_domains.json`.
-
----
-
-## API Documentation (Swagger/OpenAPI)
-
-You can view and interact with the API documentation using Swagger Editor:
-
-- [Open Swagger Editor](https://editor.swagger.io/)
-- In Swagger Editor, click "File" → "Import File" and select `openapi.yaml` from this repository.
-- Or, copy the contents of `openapi.yaml` and paste it into the editor window.
-
-This gives you a live, interactive view of all API endpoints and schemas.
+- Ingen passord lagres, kun engangskode
+- Sesjoner er server-side og utløper etter 8 timer
+- Roller håndheves strengt
+- Rate limiting på alle sensitive endepunkter
+- All konfigurasjon i `.env` (aldri i git)
 
 ---
 
-## License
+## Feilsøking
 
-Proprietary. For use by NorgesGruppen and authorized personnel only.
+- **Får ikke e-post?** Sjekk SMTP-innstillinger og at e-post/domene er i `approved_domains.json`.
+- **Rolle mangler?** Sjekk at e-post/domene har riktige roller i `approved_domains.json`.
+- **Fil ikke funnet?** Appen forventer at `approved_domains.json` finnes i containeren på `/app/approved_domains.json`.
+
+---
+
+## API-dokumentasjon (Swagger/OpenAPI)
+
+Du kan se og teste API-dokumentasjonen interaktivt med Swagger Editor:
+
+- [Åpne Swagger Editor](https://editor.swagger.io/)
+- I Swagger Editor: Velg "File" → "Import File" og åpne `openapi.yaml` fra dette prosjektet.
+- Eller kopier innholdet fra `openapi.yaml` og lim det inn i editor-vinduet.
+
+Dette gir deg en levende, interaktiv oversikt over alle API-endepunkter og datamodeller.
+
+---
+
+## Lisens
+
+Proprietær. Kun for bruk av NorgesGruppen og autorisert personell.
