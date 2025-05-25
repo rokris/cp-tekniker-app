@@ -39,4 +39,261 @@ paths:
         '403':
           description: E-post/domene ikke godkjent
         '429':
-          description: For mange forespørsel
+          description: For mange forespørsler (rate limit)
+        '500':
+          description: Kunne ikke sende kode
+
+  /login:
+    post:
+      summary: Logg inn med e-post og kode
+      description: Autentiser bruker og start sesjon.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+                  example: 123-456
+      responses:
+        '200':
+          description: Innlogging vellykket
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  session_token:
+                    type: string
+        '400':
+          description: Manglende e-post eller kode / Ingen kode forespurt
+        '401':
+          description: Ugyldig kode
+        '429':
+          description: For mange forespørsler (rate limit)
+
+  /logout:
+    post:
+      summary: Logg ut
+      description: Avslutt brukersesjon.
+      responses:
+        '200':
+          description: Logget ut
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /is_logged_in:
+    get:
+      summary: Sjekk innloggingsstatus
+      description: Returnerer om brukeren er logget inn.
+      responses:
+        '200':
+          description: Innloggingsstatus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logged_in:
+                    type: boolean
+
+  /get_device_info:
+    get:
+      summary: Hent enhetsinformasjon
+      description: Hent informasjon om en enhet basert på MAC-adresse (krever innlogging).
+      parameters:
+        - in: query
+          name: macaddr
+          schema:
+            type: string
+          required: true
+          description: MAC-adresse til enheten
+      responses:
+        '200':
+          description: Enhetsinformasjon
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: MAC-adresse er påkrevd
+        '401':
+          description: Ikke autentisert
+        '500':
+          description: Feil ved henting av enhetsinformasjon
+
+  /create_device:
+    post:
+      summary: Opprett enhet
+      description: Opprett en ny enhet (krever innlogging).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mac:
+                  type: string
+                  description: MAC-adresse
+                role_id:
+                  type: string
+                  description: Rolle-ID
+                enabled:
+                  type: boolean
+                visitor_name:
+                  type: string
+                expire_time:
+                  type: integer
+                  description: Unix-tid (sekunder)
+                sponsor_name:
+                  type: string
+                sponsor_profile:
+                  type: string
+      responses:
+        '201':
+          description: Enhet opprettet
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Manglende påkrevde felt
+        '401':
+          description: Ikke autentisert
+        '500':
+          description: Feil ved opprettelse av enhet
+
+  /GetDeviceRoles:
+    get:
+      summary: Hent tillatte enhetsroller
+      description: Returnerer listen over enhetsroller brukeren har tilgang til.
+      responses:
+        '200':
+          description: Liste over roller
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    role_id:
+                      type: string
+        '401':
+          description: Ikke autentisert
+        '500':
+          description: Feil ved henting av roller
+
+# Eksterne API-er som konsumeres (ClearPass)
+  /api/oauth:
+    post:
+      summary: Hent OAuth-token (ClearPass)
+      description: Henter access token fra ClearPass for autentisering av API-kall.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  example: client_credentials
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        '200':
+          description: Access token mottatt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  expires_in:
+                    type: integer
+        '400':
+          description: Ugyldig forespørsel
+
+  /api/device/mac/{macaddr}:
+    get:
+      summary: Hent enhet fra ClearPass
+      description: Henter enhet fra ClearPass basert på MAC-adresse (brukes av backend).
+      parameters:
+        - in: path
+          name: macaddr
+          schema:
+            type: string
+          required: true
+          description: MAC-adresse til enheten
+      responses:
+        '200':
+          description: Enhetsdata fra ClearPass
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearPassDevice'
+        '401':
+          description: Ikke autentisert
+        '404':
+          description: Enhet ikke funnet
+
+  /api/device:
+    post:
+      summary: Opprett enhet i ClearPass
+      description: Oppretter en ny enhet i ClearPass (brukes av backend).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearPassDevice'
+      responses:
+        '201':
+          description: Enhet opprettet i ClearPass
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearPassDevice'
+        '400':
+          description: Ugyldig forespørsel
+        '401':
+          description: Ikke autentisert
+
+components:
+  schemas:
+    ClearPassDevice:
+      type: object
+      properties:
+        mac_address:
+          type: string
+        # Legg til flere enhetsfelter ved behov
+    ClearPassRole:
+      type: object
+      properties:
+        role_id:
+          type: string
+        role_name:
+          type: string
+
+externalDocs:
+  description: Aruba ClearPass API (brukes av backend)
+  url: https://www.arubanetworks.com/techdocs/ClearPass/CP_ReleaseNotes/Content/REST-API.htm
