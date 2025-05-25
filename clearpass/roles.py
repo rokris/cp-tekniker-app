@@ -1,8 +1,12 @@
-# Role and domain logic: get_user_roles, load_approved_domains_and_emails
+"""
+Rolle- og domenehåndtering for CP-Tekniker Device Management App.
+Gir funksjoner for å laste godkjente domener/e-poster og finne roller for en bruker.
+"""
 import os
 import json
 
 def load_approved_domains_and_emails():
+    """Laster approved_domains.json og returnerer to lister: godkjente domener og godkjente e-poster."""
     approved_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..", "approved_domains.json"
     )
@@ -22,6 +26,9 @@ def load_approved_domains_and_emails():
         return [], []
 
 def get_user_roles(email, full_domain_data=None):
+    """Returnerer roller for en gitt e-post basert på eksakt match eller domenematch.
+    full_domain_data kan sendes inn for å unngå fil-I/O hvis allerede lastet.
+    """
     email = email.lower()
     if full_domain_data is None:
         approved_path = os.path.join(

@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  title: CP-Tekniker Device Management API
+  version: 1.0.0
+  description: |
+    API documentation for the CP-Tekniker Device Management App. This covers all published (backend) endpoints and the main external ClearPass API endpoints consumed by the backend.
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /request_auth_code:
+    post:
+      summary: Request authentication code
+      description: Send a one-time authentication code to an approved email address.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Missing or invalid email
+        '403':
+          description: Email/domain not approved
+        '429':
+          description: Rate limit exceeded
+        '500':
+          description: Could not send code
+
+  /login:
+    post:
+      summary: Log in with email and code
+      description: Authenticate user and start session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+                  example: 123-456
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  session_token:
+                    type: string
+        '400':
+          description: Missing email or code / No code requested
+        '401':
+          description: Invalid code
+        '429':
+          description: Rate limit exceeded
+
+  /logout:
+    post:
+      summary: Log out
+      description: End user session.
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /is_logged_in:
+    get:
+      summary: Check login status
+      description: Returns whether the user is logged in.
+      responses:
+        '200':
+          description: Login status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logged_in:
+                    type: boolean
+
+  /get_device_info:
+    get:
+      summary: Get device info
+      description: Fetch device information by MAC address (requires login).
+      parameters:
+        - in: query
+          name: macaddr
+          schema:
+            type: string
+          required: true
+          description: MAC address of the device
+      responses:
+        '200':
+          description: Device info
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: MAC address required
+        '401':
+          description: Not authenticated
+        '500':
+          description: Error fetching device info
+
+  /create_device:
+    post:
+      summary: Create device
+      description: Create a new device entry (requires login).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mac:
+                  type: string
+                  description: MAC address
+                role_id:
+                  type: string
+                  description: Role ID
+                enabled:
+                  type: boolean
+                visitor_name:
+                  type: string
+                expire_time:
+                  type: integer
+                  description: Unix timestamp
+                sponsor_name:
+                  type: string
+                sponsor_profile:
+                  type: string
+      responses:
+        '201':
+          description: Device created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Missing required fields
+        '401':
+          description: Not authenticated
+        '500':
+          description: Error creating device
+
+  /GetDeviceRoles:
+    get:
+      summary: Get allowed device roles
+      description: Returns the list of device roles the logged-in user is allowed to use.
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    role_id:
+                      type: string
+        '401':
+          description: Not authenticated
+        '500':
+          description: Error fetching roles
+
+# External APIs consumed (ClearPass)
+
+components:
+  schemas:
+    ClearPassDevice:
+      type: object
+      properties:
+        mac_address:
+          type: string
+        # Add other device properties as needed
+    ClearPassRole:
+      type: object
+      properties:
+        role_id:
+          type: string
+        role_name:
+          type: string
+
+externalDocs:
+  description: Aruba ClearPass API (consumed by backend)
+  url: https://www.arubanetworks.com/techdocs/ClearPass/CP_ReleaseNotes/Content/REST-API.htm

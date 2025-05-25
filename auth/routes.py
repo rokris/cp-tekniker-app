@@ -1,5 +1,8 @@
-# Authentication routes for login, request_auth_code, logout
-from flask import Blueprint, request, jsonify, session
+"""
+Blueprint for autentiseringsruter (login, kode, logout).
+Håndterer innlogging med engangskode, utlogging og rate limiting.
+"""
+from flask import Blueprint, request, jsonify, session, current_app as app
 from .utils import send_auth_code, generate_auth_code, is_email_approved
 from .limiter import limiter
 from utils.redis import redis_client
@@ -10,6 +13,7 @@ bp = Blueprint('auth', __name__)
 @bp.route('/request_auth_code', methods=['POST'])
 @limiter.limit("5 per minute;20 per hour")
 def request_auth_code():
+    """API-endepunkt for å be om engangskode til e-post. Sjekker at e-post er godkjent og sender kode."""
     data = request.get_json()
     email = data.get("email", "").strip() if data else ""
     if not email:
@@ -27,6 +31,7 @@ def request_auth_code():
 @bp.route('/login', methods=['POST'])
 @limiter.limit("10 per minute;30 per hour")
 def login():
+    """API-endepunkt for å logge inn med e-post og engangskode. Oppretter sesjon ved suksess."""
     data = request.get_json()
     email = data.get("email", "").strip() if data else ""
     code = data.get("code", "").strip() if data else ""
@@ -47,5 +52,6 @@ def login():
 
 @bp.route('/logout', methods=['POST'])
 def logout():
+    """API-endepunkt for å logge ut og tømme sesjon."""
     session.clear()
     return jsonify({"message": "Logget ut."}), 200

@@ -108,6 +108,18 @@ static/
 
 ---
 
+## API Documentation (Swagger/OpenAPI)
+
+You can view and interact with the API documentation using Swagger Editor:
+
+- [Open Swagger Editor](https://editor.swagger.io/)
+- In Swagger Editor, click "File" → "Import File" and select `openapi.yaml` from this repository.
+- Or, copy the contents of `openapi.yaml` and paste it into the editor window.
+
+This gives you a live, interactive view of all API endpoints and schemas.
+
+---
+
 ## License
 
 Proprietary. For use by NorgesGruppen and authorized personnel only.

@@ -1,9 +1,19 @@
+"""
+Konfigurasjon for CP-Tekniker Device Management App.
+Laster miljøvariabler fra .env og gjør dem tilgjengelig via Config-klassen.
+Brukes for sentral styring av API-nøkler, SMTP, Redis, osv.
+"""
+
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class Config:
+    """
+    Sentral konfigurasjonsklasse for Flask-appen.
+    Alle sensitive og miljøspesifikke verdier hentes fra .env.
+    """
     SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "dev_secret_key")
     SESSION_TYPE = "filesystem"
     SESSION_PERMANENT = True

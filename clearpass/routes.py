@@ -1,4 +1,7 @@
-# ClearPass extra routes: GetDeviceRoles
+"""
+Blueprint for ClearPass-tilleggsruter (roller).
+Eksponerer endepunkt for å hente kun de rollene brukeren har tilgang til.
+"""
 from flask import Blueprint, jsonify, session
 from .api import get_cached_token
 import requests
@@ -8,6 +11,7 @@ bp = Blueprint('clearpass_routes', __name__)
 
 @bp.route('/GetDeviceRoles', methods=['GET'])
 def get_device_roles():
+    """API-endepunkt som returnerer kun de rollene brukeren har tilgang til (basert på e-post/domene)."""
     if not session.get("logged_in") or not session.get("session_token"):
         return jsonify({"error": "Autentisering kreves."}), 401
     token = get_cached_token()

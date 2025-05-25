@@ -108,6 +108,18 @@ static/
 
 ---
 
+## API-dokumentasjon (Swagger/OpenAPI)
+
+Du kan se og teste API-dokumentasjonen interaktivt med Swagger Editor:
+
+- [Åpne Swagger Editor](https://editor.swagger.io/)
+- I Swagger Editor: Velg "File" → "Import File" og åpne `openapi.yaml` fra dette prosjektet.
+- Eller kopier innholdet fra `openapi.yaml` og lim det inn i editor-vinduet.
+
+Dette gir deg en levende, interaktiv oversikt over alle API-endepunkter og datamodeller.
+
+---
+
 ## Lisens
 
 Proprietær. Kun for bruk av NorgesGruppen og autorisert personell.

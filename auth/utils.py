@@ -1,4 +1,7 @@
-# Authentication utilities: send_auth_code, generate_auth_code, is_email_approved
+"""
+Autentiseringsverktøy for CP-Tekniker Device Management App.
+Inneholder funksjoner for å generere og sende engangskoder, samt sjekke om e-post er godkjent.
+"""
 import random
 import re
 import smtplib
@@ -7,9 +10,11 @@ import email.utils
 from config import Config
 
 def generate_auth_code():
+    """Genererer en tilfeldig engangskode på formatet 123-456."""
     return f"{random.randint(100,999)}-{random.randint(100,999)}"
 
 def send_auth_code(recipient_email, code):
+    """Sender engangskode på e-post til bruker via SMTP."""
     from_name = Config.SMTP_FROM_NAME
     msg = EmailMessage()
     msg["Subject"] = "Din engangskode for innlogging til Aruba ClearPass"
@@ -53,6 +58,7 @@ NorgesGruppen Data AS
         return False
 
 def is_email_approved(email, approved_domains, approved_emails):
+    """Sjekker om e-post er godkjent basert på eksakt match eller domenematch."""
     email = email.lower()
     if email in approved_emails:
         return True

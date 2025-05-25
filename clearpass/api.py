@@ -1,14 +1,20 @@
-# ClearPass API logic: get_device_info, create_device, get_cached_token
+"""
+ClearPass API-modul for CP-Tekniker Device Management App.
+Inneholder logikk for å hente og opprette enheter via ClearPass, samt caching av access token.
+Eksponerer relevante API-endepunkter via Flask Blueprint.
+"""
 from flask import Blueprint, request, jsonify, session, current_app as app
 import requests
 from datetime import datetime, timedelta
 from config import Config
 
+# Token cache for å unngå unødvendige token-forespørsler
 token_cache = {"token": None, "expiry": None}
 
 bp = Blueprint('clearpass_api', __name__)
 
 def get_cached_token():
+    """Henter og cacher access token fra ClearPass API."""
     now = datetime.now()
     if token_cache["token"] and token_cache["expiry"] and token_cache["expiry"] > now:
         return token_cache["token"]
@@ -33,6 +39,7 @@ def get_cached_token():
         return None
 
 def get_device_info(macaddr):
+    """Henter enhetsinformasjon fra ClearPass basert på MAC-adresse."""
     token = get_cached_token()
     if not token:
         return None, "Autentisering feilet."
@@ -47,6 +54,7 @@ def get_device_info(macaddr):
         return None, "Kunne ikke hente enhetsinformasjon."
 
 def create_device(payload):
+    """Oppretter ny enhet i ClearPass med gitt payload."""
     token = get_cached_token()
     if not token:
         return None, "Autentisering feilet."
@@ -62,6 +70,7 @@ def create_device(payload):
 
 @bp.route('/get_device_info', methods=['GET'])
 def device_info_route():
+    """API-endepunkt for å hente enhetsinfo (krever innlogging)."""
     if not session.get("logged_in") or not session.get("session_token"):
         return jsonify({"error": "Autentisering kreves."}), 401
     macaddr = request.args.get("macaddr")
@@ -74,6 +83,7 @@ def device_info_route():
 
 @bp.route('/create_device', methods=['POST'])
 def create_device_route():
+    """API-endepunkt for å opprette enhet (krever innlogging)."""
     if not session.get("logged_in") or not session.get("session_token"):
         return jsonify({"error": "Autentisering kreves."}), 401
     payload = request.json

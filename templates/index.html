@@ -1,3 +1,8 @@
+<!--
+  index.html - Hovedfrontend for CP-Tekniker Device Management App
+  Viser login, enhetsinformasjon og opprettelse av enhet. Kommuniserer med backend via fetch/REST.
+  Kommentarer forklarer hovedseksjoner og viktige funksjoner.
+-->
 <!DOCTYPE html>
 <html lang="no" class="dark">
 <head>
@@ -5,6 +10,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Device Management</title>
   <link rel="icon" href="/static/favicon.png" type="image/png" />
+  <!-- Tailwind CSS og Lucide-ikoner for moderne UI -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
@@ -14,6 +20,7 @@
   </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <!-- Toppnavigasjon med logo og utloggingsknapp -->
   <nav class="bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
     <div class="flex items-center space-x-2">
       <i data-lucide="laptop" class="w-5 h-5"></i>
@@ -22,11 +29,14 @@
     <button id="logoutBtn" onclick="logout()" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">Logg ut</button>
   </nav>
 
+  <!-- Toast-meldinger for tilbakemelding til bruker -->
   <div class="fixed top-4 right-4 space-y-2 z-50" id="toastContainer"></div>
 
+  <!-- Hovedinnhold: skjult bak login hvis ikke logget inn -->
   <div class="flex justify-center items-center py-10">
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 w-full max-w-md space-y-6">
       <div id="protectedContent" class="hidden space-y-6">
+        <!-- Seksjon for å hente enhetsinfo -->
         <div>
           <h3 class="text-lg font-medium flex items-center gap-2"><i data-lucide="search" class="w-5 h-5"></i> Hent enhetsinfo</h3>
           <input id="macaddr" placeholder="MAC-adresse" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700" />
@@ -37,6 +47,7 @@
           <div id="mainResult" class="mt-2 text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded"></div>
         </div>
 
+        <!-- Seksjon for å opprette enhet -->
         <div>
           <h3 class="text-lg font-medium flex items-center gap-2"><i data-lucide="plus-circle" class="w-5 h-5"></i> Opprett enhet</h3>
           <label for="roleDropdown">Velg rolle:</label>
@@ -51,6 +62,7 @@
     </div>
   </div>
 
+  <!-- Login-modal for e-post og kode -->
   <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-sm">
       <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5"></i> Logg inn</h2>
@@ -61,6 +73,7 @@
     </div>
   </div>
 
+  <!-- Modal for visning av enhetsinfo -->
   <div id="deviceInfoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative">
       <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> Enhetsinfo</h2>
@@ -69,6 +82,7 @@
     </div>
   </div>
 
+  <!-- Modal for bekreftelse etter opprettelse av enhet -->
   <div id="createDeviceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative">
       <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> Enhet opprettet</h2>
@@ -78,9 +92,10 @@
   </div>
 
   <script>
+    // Initialiserer Lucide-ikoner
     lucide.createIcons();
 
-    // ENTER key triggers correct button in login modal
+    // ENTER-tast trigger riktig knapp i login-modal
     document.addEventListener('DOMContentLoaded', function() {
       const emailInput = document.getElementById('loginEmail');
       const codeInput = document.getElementById('authCode');
@@ -112,6 +127,7 @@
       }
     });
 
+    // Viser toast-melding øverst til høyre
     function showToast(message, type = "success") {
       const toastContainer = document.getElementById("toastContainer");
       const toast = document.createElement("div");
@@ -122,16 +138,19 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
+    // Formaterer kode-input til 123-456
     function formatCodeInput(input) {
       let value = input.value.replace(/[^0-9]/g, "");
       if (value.length > 3) value = value.slice(0, 3) + "-" + value.slice(3);
       input.value = value;
     }
 
+    // Deaktiverer/aktiverer knapper for å hindre dobbelklikk
     function disableButtons(ids, disabled = true) {
       ids.forEach(id => document.getElementById(id).disabled = disabled);
     }
 
+    // Ber backend sende engangskode til e-post
     async function requestAuthCode() {
       const email = document.getElementById("loginEmail").value;
       showToast("Sender kode...");
@@ -152,6 +171,7 @@
       disableButtons(["requestAuthBtn"], false);
     }
 
+    // Verifiserer engangskode og logger inn bruker
     async function verifyAuthCode() {
       const email = document.getElementById("loginEmail").value;
       const codeInput = document.getElementById("authCode");
@@ -179,12 +199,14 @@
       disableButtons(["loginBtn", "requestAuthBtn"], false);
     }
 
+    // Logger ut bruker og skjuler beskyttet innhold
     async function logout() {
       await fetch("/logout", { method: "POST" });
       setLoggedIn(false);
       showToast("Du er logget ut.");
     }
 
+    // Viser/skjuler innhold basert på innloggingsstatus
     function setLoggedIn(loggedIn) {
       document.getElementById("loginModal").classList.toggle("hidden", loggedIn);
       document.getElementById("protectedContent").classList.toggle("hidden", !loggedIn);
@@ -192,6 +214,7 @@
       if (loggedIn) fetchDeviceRoles();
     }
 
+    // Henter roller fra backend og fyller dropdown
     async function fetchDeviceRoles() {
       try {
         const response = await fetch("/GetDeviceRoles");
@@ -209,6 +232,7 @@
       }
     }
 
+    // Henter enhetsinfo fra backend og viser popup
     async function getDeviceInfo() {
       const macaddr = document.getElementById("macaddr").value;
       const result = document.getElementById("mainResult");
@@ -233,6 +257,7 @@
       disableButtons(["getDeviceInfoBtn", "createDeviceBtn"], false);
     }
 
+    // Viser popup med enhetsinfo
     function showDeviceInfoModal(data) {
       const modal = document.getElementById("deviceInfoModal");
       const content = document.getElementById("deviceInfoPopupContent");
@@ -241,12 +266,14 @@
       document.body.classList.add("overflow-hidden");
     }
 
+    // Lukker enhetsinfo-popup
     function closeDeviceInfoModal() {
       const modal = document.getElementById("deviceInfoModal");
       modal.classList.add("hidden");
       document.body.classList.remove("overflow-hidden");
     }
 
+    // Sender forespørsel om å opprette enhet
     async function createDevice() {
       const mac = document.getElementById("macaddr").value.trim();
       const role_id = document.getElementById("roleDropdown").value;
@@ -282,6 +309,7 @@
       disableButtons(["createDeviceBtn", "getDeviceInfoBtn"], false);
     }
 
+    // Viser popup etter opprettelse av enhet
     function showCreateDeviceModal(data) {
       const modal = document.getElementById("createDeviceModal");
       const content = document.getElementById("createDevicePopupContent");
@@ -290,12 +318,14 @@
       document.body.classList.add("overflow-hidden");
     }
 
+    // Lukker opprettet-enhet-popup
     function closeCreateDeviceModal() {
       const modal = document.getElementById("createDeviceModal");
       modal.classList.add("hidden");
       document.body.classList.remove("overflow-hidden");
     }
 
+    // Sjekker innloggingsstatus ved lasting av siden
     window.onload = async () => {
       try {
         const response = await fetch("/is_logged_in");

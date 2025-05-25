@@ -1,3 +1,10 @@
+"""
+CP-Tekniker Device Management App
+
+Hoved-entrépunkt for Flask-applikasjonen. Initialiserer appen, laster konfigurasjon,
+registrerer blueprints for autentisering og ClearPass-funksjonalitet, og sentraliserer feil- og rate limit-håndtering.
+"""
+
 from flask import Flask, render_template, session, request, jsonify
 from flask_session import Session
 from config import Config
@@ -9,10 +16,10 @@ app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
 Session(app)
 
-# Register blueprints
-from auth.routes import bp as auth_bp
-from clearpass.api import bp as clearpass_api_bp
-from clearpass.routes import bp as clearpass_routes_bp
+# Registrerer alle blueprints for modulær struktur
+from auth.routes import bp as auth_bp  # Autentisering (login, logout, kode)
+from clearpass.api import bp as clearpass_api_bp  # ClearPass API-endepunkter (device info, opprettelse)
+from clearpass.routes import bp as clearpass_routes_bp  # Rolle-endepunkt
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(clearpass_api_bp)
@@ -20,14 +27,17 @@ app.register_blueprint(clearpass_routes_bp)
 
 @app.route("/")
 def home():
+    """Rendrer hovedsiden (index.html). Viser login eller beskyttet innhold avhengig av sesjon."""
     return render_template("index.html", logged_in=session.get("logged_in", False))
 
 @app.route("/is_logged_in", methods=["GET"])
 def is_logged_in():
+    """Returnerer om brukeren er logget inn (brukes av frontend for å vise riktig innhold)."""
     return jsonify({"logged_in": bool(session.get("logged_in"))})
 
 @app.errorhandler(RateLimitExceeded)
 def handle_rate_limit(e):
+    """Sentralisert håndtering av rate limiting. Returnerer brukervennlig feilmelding og retry-after."""
     retry_after = None
     if hasattr(e, 'retry_after') and e.retry_after:
         retry_after = int(e.retry_after)
