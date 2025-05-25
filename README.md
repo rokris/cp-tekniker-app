@@ -2,7 +2,7 @@
   <img src="static/favicon.png" width="90" alt="Hovedlogo"/>
 </p>
 
-# CP-Tekniker Enhetsadministrasjonsapp
+# CP-Tekniker
 
 En moderne, sikker og brukervennlig enhetsadministrasjonsløsning for NorgesGruppen, bygget med Flask og designet for Docker. Appen er nå modulært organisert for enkel videreutvikling og samarbeid.
 
