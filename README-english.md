@@ -51,34 +51,6 @@ static/
 
 ---
 
-## How does it work?
-
-1. **Login**: User enters email. If email/domain is approved, a one-time code is sent. Entering the code logs in the user.
-2. **Role fetching**: After login, only the roles the user has access to are fetched (exact email has highest priority).
-3. **Device management**: User can fetch device info or create new devices, depending on their roles.
-4. **Rate limiting**: All sensitive endpoints are protected against abuse.
-
----
-
-## Getting Started (Docker)
-
-1. **Clone the repo:**
-   ```sh
-   git clone <repo-url>
-   cd cp-tekniker-app
-   ```
-2. **Configure environment:**
-   - Edit `.env` with your ClearPass API and SMTP settings.
-   - Edit `approved_domains.json` to specify allowed emails/domains and roles.
-3. **Build and run with Docker:**
-   ```sh
-   docker build -t cp-tekniker-app .
-   docker run -p 8000:8000 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json cp-tekniker-app
-   ```
-   The app will be available at [http://localhost:8000](http://localhost:8000)
-
----
-
 ## Configuration Files
 
 - **.env**: Environment variables for API, SMTP, and Flask.

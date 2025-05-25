@@ -51,39 +51,12 @@ static/
 
 ---
 
-## Hvordan virker det?
-
-1. **Innlogging**: Brukeren skriver inn e-post. Hvis e-post/domene er godkjent, sendes en engangskode. Koden tastes inn for å logge inn.
-2. **Rollehenting**: Etter innlogging hentes kun de rollene brukeren har tilgang til (eksakt e-post har høyest prioritet).
-3. **Enhetsadministrasjon**: Brukeren kan hente info om enheter eller opprette nye, avhengig av sine roller.
-4. **Rate limiting**: Alle sensitive endepunkter er beskyttet mot misbruk.
-
----
-
-## Slik kommer du i gang (Docker)
-
-1. **Klon repoet:**
-   ```sh
-   git clone <repo-url>
-   cd cp-tekniker-app
-   ```
-2. **Konfigurer miljø:**
-   - Rediger `.env` med ClearPass API- og SMTP-innstillinger.
-   - Rediger `approved_domains.json` for å angi tillatte e-poster/domener og roller.
-3. **Bygg og start med Docker:**
-   ```sh
-   docker build -t cp-tekniker-app .
-   docker run -p 8000:8000 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json cp-tekniker-app
-   ```
-   Appen er tilgjengelig på [http://localhost:8000](http://localhost:8000)
-
----
-
 ## Konfigurasjonsfiler
 
 - **.env**: Miljøvariabler for API, SMTP og Flask.
 
   **Eksempel på .env:**
+
   ```env
   BASE_URL=https://clearpass.ngdata.no
   CLIENT_ID=app
@@ -99,9 +72,11 @@ static/
 - **approved_domains.json**: Liste over godkjente e-poster/domener og tilhørende roller.
 
   ### Om approved_domains.json
+
   Filen `approved_domains.json` definerer hvilke e-poster og domener som er godkjent for innlogging, og hvilke roller de har tilgang til. Hver oppføring kan være en eksakt e-postadresse eller et domene, og har en tilhørende liste med roller.
 
   **Eksempel på innhold:**
+
   ```json
   [
     {
@@ -124,6 +99,7 @@ static/
     }
   ]
   ```
+
   - Hvis "email" inneholder en full e-postadresse, gjelder oppføringen kun for denne brukeren.
   - Hvis "email" kun er et domene (f.eks. `firma.no`), gjelder oppføringen for alle brukere med e-post i dette domenet.
   - "roles" er en liste med objekter som definerer hvilke ClearPass-roller brukeren eller domenet har tilgang til.
