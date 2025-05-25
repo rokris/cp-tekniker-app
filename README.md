@@ -120,6 +120,40 @@ Dette gir deg en levende, interaktiv oversikt over alle API-endepunkter og datam
 
 ---
 
+## Om logoen og symbolikken
+
+<p align="center">
+  <img src="static/favicon.png" width="90" alt="Hovedlogo"/>
+</p>
+
+Vår logo består av fire fargede kvadranter som sammen illustrerer kjerneområdene til nettverksgruppen:
+
+<table>
+  <tr>
+    <td align="center"><img src="blue_quadrant.png" width="60" alt="Planlegging og struktur"/></td>
+    <td align="center"><img src="red_quadrant.png" width="60" alt="Sikkerhet og kontroll"/></td>
+    <td align="center"><img src="yellow_quadrant.png" width="60" alt="Installasjon og fysisk drift"/></td>
+    <td align="center"><img src="green_quadrant.png" width="60" alt="Mobilitet og tilgjengelighet"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Planlegging og struktur</b></td>
+    <td align="center"><b>Sikkerhet og kontroll</b></td>
+    <td align="center"><b>Installasjon og fysisk drift</b></td>
+    <td align="center"><b>Mobilitet og tilgjengelighet</b></td>
+  </tr>
+</table>
+
+Disse fire symbolene utgjør et helhetlig bilde av hva nettverksgruppen jobber med:
+
+- <b>Planlegging og struktur</b> <img src="blue_quadrant.png" width="18" style="vertical-align:middle"/>: Strategisk planlegging, design og strukturering av nettverk.
+- <b>Sikkerhet og kontroll</b> <img src="red_quadrant.png" width="18" style="vertical-align:middle"/>: Fokus på sikkerhet, tilgangskontroll og overvåking.
+- <b>Installasjon og fysisk drift</b> <img src="yellow_quadrant.png" width="18" style="vertical-align:middle"/>: Praktisk installasjon, kabling og fysisk infrastruktur.
+- <b>Mobilitet og tilgjengelighet</b> <img src="green_quadrant.png" width="18" style="vertical-align:middle"/>: Trådløse løsninger, fleksibilitet og brukertilgjengelighet.
+
+Logoen symboliserer at vi dekker hele spekteret fra planlegging til daglig drift og tilgjengelighet.
+
+---
+
 ## Lisens
 
 Proprietær. Kun for bruk av NorgesGruppen og autorisert personell.
