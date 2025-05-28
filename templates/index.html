@@ -5,340 +5,496 @@
 -->
 <!DOCTYPE html>
 <html lang="no" class="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Device Management</title>
-  <link rel="icon" href="/static/favicon.png" type="image/png" />
-  <!-- Tailwind CSS og Lucide-ikoner for moderne UI -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'media',
-    };
-  </script>
-</head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-  <!-- Toppnavigasjon med logo og utloggingsknapp -->
-  <nav class="bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
-    <div class="flex items-center space-x-2">
-      <img src="/static/favicon.png" alt="Logo" class="w-7 h-7 rounded mr-2" />
-      <i data-lucide="laptop" class="w-5 h-5"></i>
-      <span class="font-semibold text-lg">Device Manager</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Device Management</title>
+    <link rel="icon" href="/static/favicon.png" type="image/png" />
+    <!-- Tailwind CSS og Lucide-ikoner for moderne UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "media",
+      };
+    </script>
+  </head>
+  <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <!-- Toppnavigasjon med logo og utloggingsknapp -->
+    <nav
+      class="bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center"
+    >
+      <div class="flex items-center space-x-2">
+        <img
+          src="/static/favicon.png"
+          alt="Logo"
+          class="w-7 h-7 rounded mr-2"
+        />
+        <i data-lucide="laptop" class="w-5 h-5"></i>
+        <span class="font-semibold text-lg">Device Manager</span>
+      </div>
+      <button
+        id="logoutBtn"
+        onclick="logout()"
+        class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded"
+      >
+        Logg ut
+      </button>
+    </nav>
+
+    <div class="fixed top-4 right-4 space-y-2 z-50" id="toastContainer"></div>
+
+    <div class="flex justify-center items-center py-10">
+      <div
+        class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 w-full max-w-md space-y-6"
+      >
+        <div id="protectedContent" class="hidden space-y-6">
+          <div>
+            <h3 class="text-lg font-medium flex items-center gap-2">
+              <i data-lucide="search" class="w-5 h-5"></i> Hent enhetsinfo
+            </h3>
+            <input
+              id="macaddr"
+              placeholder="MAC-adresse"
+              class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+            />
+            <div class="flex flex-row gap-4 mt-2" id="actionButtons">
+              <button
+                id="getDeviceInfoBtn"
+                onclick="getDeviceInfo()"
+                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg"
+              >
+                Hent info
+              </button>
+              <button
+                id="createDeviceBtn"
+                onclick="createDevice()"
+                class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg"
+              >
+                Opprett enhet
+              </button>
+            </div>
+            <div
+              id="mainResult"
+              class="mt-2 text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded"
+            ></div>
+            <div
+              id="statusLog"
+              class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded p-2 font-mono mt-2"
+            ></div>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-medium flex items-center gap-2">
+              <i data-lucide="plus-circle" class="w-5 h-5"></i> Opprett enhet
+            </h3>
+            <label for="roleDropdown">Velg rolle:</label>
+            <select
+              id="roleDropdown"
+              class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+            ></select>
+            <input
+              id="visitorName"
+              placeholder="Navn på enhet"
+              class="w-full mt-2 px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+            />
+            <input
+              type="datetime-local"
+              id="expireTime"
+              class="w-full mt-2 px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+            />
+            <label class="inline-flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                id="enabledCheckbox"
+                checked
+                class="h-4 w-4"
+              />
+              Aktivert
+            </label>
+          </div>
+          <div>
+            <label
+              for="sponsorName"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Registrert av</label
+            >
+            <input
+              id="sponsorName"
+              readonly
+              class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
+              value=""
+            />
+          </div>
+        </div>
+      </div>
     </div>
-    <button id="logoutBtn" onclick="logout()" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">Logg ut</button>
-  </nav>
 
-  <!-- Toast-meldinger for tilbakemelding til bruker -->
-  <div class="fixed top-4 right-4 space-y-2 z-50" id="toastContainer"></div>
+    <div
+      id="loginModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-sm"
+      >
+        <div class="flex flex-col items-center mb-2">
+          <img
+            src="/static/favicon.png"
+            alt="Logo"
+            class="w-12 h-12 rounded mb-2"
+          />
+          <h2 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="lock" class="w-5 h-5"></i> Logg inn
+          </h2>
+        </div>
+        <input
+          id="loginEmail"
+          type="email"
+          placeholder="E-postadresse"
+          autofocus
+          class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+        />
+        <button
+          id="requestAuthBtn"
+          onclick="requestAuthCode()"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+        >
+          Be om kode
+        </button>
+        <input
+          id="authCode"
+          placeholder="Kode (f.eks. 123-456)"
+          maxlength="7"
+          inputmode="numeric"
+          oninput="formatCodeInput(this)"
+          class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+        />
+        <button
+          id="loginBtn"
+          onclick="verifyAuthCode()"
+          class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
+        >
+          Logg inn
+        </button>
+      </div>
+    </div>
 
-  <!-- Hovedinnhold: skjult bak login hvis ikke logget inn -->
-  <div class="flex justify-center items-center py-10">
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 w-full max-w-md space-y-6">
-      <div id="protectedContent" class="hidden space-y-6">
-        <!-- Seksjon for å hente enhetsinfo -->
-        <div>
-          <h3 class="text-lg font-medium flex items-center gap-2"><i data-lucide="search" class="w-5 h-5"></i> Hent enhetsinfo</h3>
-          <input id="macaddr" placeholder="MAC-adresse" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700" />
-          <div class="flex flex-row gap-4 mt-2">
+    <div
+      id="deviceInfoModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative"
+      >
+        <h2 class="text-xl font-semibold flex items-center gap-2">
+          <i data-lucide="info" class="w-5 h-5"></i> Enhetsinfo
+        </h2>
+        <pre
+          id="deviceInfoPopupContent"
+          class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"
+        ></pre>
+        <button
+          id="closeDeviceInfoBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+        >
+          Lukk
+        </button>
+      </div>
+    </div>
+    <div
+      id="createDeviceModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative"
+      >
+        <h2 class="text-xl font-semibold flex items-center gap-2">
+          <i data-lucide="check-circle" class="w-5 h-5"></i> Enhet opprettet
+        </h2>
+        <pre
+          id="createDevicePopupContent"
+          class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"
+        ></pre>
+        <button
+          id="closeCreateDeviceBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+        >
+          Lukk
+        </button>
+      </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', function() {
+          const emailInput = document.getElementById('loginEmail');
+          const codeInput = document.getElementById('authCode');
+          const requestAuthBtn = document.getElementById('requestAuthBtn');
+          const loginBtn = document.getElementById('loginBtn');
+          const loginModal = document.getElementById('loginModal');
+          emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && emailInput.value && !requestAuthBtn.disabled && !loginModal.classList.contains('hidden')) {
+              e.preventDefault(); requestAuthBtn.click();
+            }
+          });
+          codeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && codeInput.value && !loginBtn.disabled && !loginModal.classList.contains('hidden')) {
+              e.preventDefault(); loginBtn.click();
+            }
+          });
+          document.getElementById('closeDeviceInfoBtn').addEventListener('click', closeDeviceInfoModal);
+          document.getElementById('closeCreateDeviceBtn').addEventListener('click', closeCreateDeviceModal);
+        });
+
+        function showToast(message, type = "success") {
+          const toastContainer = document.getElementById("toastContainer");
+          const toast = document.createElement("div");
+          toast.className = `${type === "error" ? 'bg-red-600' : 'bg-green-600'} text-white px-4 py-2 rounded shadow`;
+          toast.textContent = message;
+          toastContainer.appendChild(toast);
+          setTimeout(() => toast.remove(), 3000);
+        }
+        function formatCodeInput(input) {
+          let value = input.value.replace(/[^0-9]/g, "");
+          if (value.length > 3) value = value.slice(0, 3) + "-" + value.slice(3);
+          input.value = value;
+        }
+        function disableButtons(ids, disabled = true) {
+          ids.forEach(id => document.getElementById(id).disabled = disabled);
+        }
+        async function requestAuthCode() {
+          const email = document.getElementById("loginEmail").value;
+          showToast("Sender kode..."); disableButtons(["requestAuthBtn"]);
+          try {
+            const response = await fetch("/request_auth_code", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ email })});
+            const data = await response.json(); document.getElementById("authCode").value = "";
+            if (response.ok) showToast(data.message || "Kode sendt."); else showToast(data.error || "Feil", "error");
+          } catch (e) { showToast("Nettverksfeil", "error"); }
+          disableButtons(["requestAuthBtn"], false);
+        }
+        async function verifyAuthCode() {
+          const email = document.getElementById("loginEmail").value;
+          const codeInputEl = document.getElementById("authCode");
+          const code = codeInputEl.value.replace(/[^0-9]/g,"").replace(/(.{3})/,"$1-");
+          showToast("Verifiserer..."); disableButtons(["loginBtn","requestAuthBtn"]);
+          try {
+            const response = await fetch("/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ email, code })});
+            const data = await response.json(); codeInputEl.value = "";
+            if (response.ok) { showToast("Innlogging vellykket."); window.loggedInEmail = email; setLoggedIn(true); } else showToast(data.error || "Feil", "error");
+          } catch { showToast("Nettverksfeil", "error"); }
+          disableButtons(["loginBtn","requestAuthBtn"], false);
+        }
+        async function logout() { await fetch("/logout", { method: "POST" }); setLoggedIn(false); showToast("Du er logget ut."); }
+        function setLoggedIn(loggedIn) {
+          document.getElementById("loginModal").classList.toggle("hidden", loggedIn);
+          document.getElementById("protectedContent").classList.toggle("hidden", !loggedIn);
+          document.getElementById("logoutBtn").classList.toggle("hidden", !loggedIn);
+          if (loggedIn) fetchDeviceRoles();
+        }
+        async function fetchDeviceRoles() {
+          try {
+            const response = await fetch("/GetDeviceRoles");
+            const data = await response.json(); const dropdown = document.getElementById("roleDropdown"); dropdown.innerHTML = "";
+            (data._embedded?.items || data || []).forEach(role => { const option = document.createElement("option"); option.value = role.role_id || role.id || role.name; option.textContent = role.name; dropdown.appendChild(option); });
+          } catch { showToast("Feil ved henting av roller", "error"); }
+        }
+        let infoFetched = false;
+        let lastFetchedDeviceInfo = null;
+        async function getDeviceInfo() {
+          const macaddr = document.getElementById("macaddr").value;
+          const result = document.getElementById("mainResult");
+          result.textContent = "Laster...";
+          disableButtons(["getDeviceInfoBtn", "createDeviceBtn"]);
+          try {
+            const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`);
+            const data = await response.json();
+            if (response.ok) {
+              showDeviceInfoModal(data);
+              document.getElementById("roleDropdown").value = data.role_id || "";
+              document.getElementById("visitorName").value = data.visitor_name || "";
+              if (data.expire_time) {
+                const dt = new Date(data.expire_time * 1000);
+                const pad = n => n.toString().padStart(2, '0');
+                document.getElementById("expireTime").value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+              } else {
+                document.getElementById("expireTime").value = "";
+              }
+              document.getElementById("enabledCheckbox").checked = typeof data.enabled !== "undefined" ? !!data.enabled : true;
+              document.getElementById("sponsorName").value = data.sponsor_name || "";
+              infoFetched = true;
+              lastFetchedDeviceInfo = data;
+              result.textContent = "Enhetsinfo hentet.";
+              logStatus("Hent info utført, infoFetched=true");
+            } else {
+              showToast(data.error || "Feil", "error");
+              result.textContent = "Feil: " + (data.error || "");
+              resetFieldsToDefault();
+            }
+          } catch (e) {
+            result.textContent = "Feil: " + e.message;
+            showToast("Nettverksfeil", "error");
+            resetFieldsToDefault();
+          }
+          disableButtons(["getDeviceInfoBtn", "createDeviceBtn"], false);
+        }
+
+        function resetFieldsToDefault() {
+          const dropdown = document.getElementById("roleDropdown");
+          dropdown.value = dropdown.options.length > 0 ? dropdown.options[0].value : "";
+          document.getElementById("visitorName").value = "";
+          document.getElementById("expireTime").value = "";
+          document.getElementById("enabledCheckbox").checked = true;
+          document.getElementById("sponsorName").value = "";
+          logStatus("Feltene er satt til default verdier");
+        }
+        function showEditButtons() {
+          const actionDiv = document.getElementById("actionButtons");
+          actionDiv.innerHTML = `
+            <button id="saveBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">Lagre</button>
+            <button id="cancelBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg">Avbryt</button>
+          `;
+          document.getElementById("macaddr").disabled = true;
+          document.getElementById("saveBtn").addEventListener("click", saveEdits);
+          document.getElementById("cancelBtn").addEventListener("click", cancelEdits);
+        }
+        function cancelEdits() {
+          const d = lastFetchedDeviceInfo;
+          document.getElementById("roleDropdown").value     = d.role_id || "";
+          document.getElementById("visitorName").value      = d.visitor_name || "";
+          if (d.expire_time) {
+            const dt = new Date(d.expire_time * 1000);
+            const pad = n => n.toString().padStart(2,'0');
+            document.getElementById("expireTime").value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+          } else {
+            document.getElementById("expireTime").value = "";
+          }
+          document.getElementById("enabledCheckbox").checked = typeof d.enabled!="undefined" ? !!d.enabled : true;
+          document.getElementById("sponsorName").value = d.sponsor_name || "";
+          // infoFetched beholder sin verdi; nullstilles kun ved endring av macadresse
+          setDefaultActionButtons();
+          logStatus("Avbryt: editor-modus avsluttet, infoFetched beholdt som true");
+        }
+        async function saveEdits() {
+          const mac = document.getElementById("macaddr").value.trim();
+          const role_id = document.getElementById("roleDropdown").value;
+          const enabled = document.getElementById("enabledCheckbox").checked;
+          const visitor_name = document.getElementById("visitorName").value.trim();
+          const expireInput = document.getElementById("expireTime").value;
+          const sponsor_name = window.loggedInEmail || "";
+          const sponsor_profile = "1";
+          const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime()/1000) : 0;
+          const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
+          const result = document.getElementById("mainResult"); result.textContent = "Oppdaterer...";
+          disableButtons(["saveBtn","cancelBtn"]);
+          try {
+            const response = await fetch("/update_device", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload) });
+            const data = await response.json();
+            if (response.ok) {
+              showToast("Endringer lagret."); setDefaultActionButtons(); infoFetched = false; logStatus("Lagre: editor-modus avsluttet, infoFetched=false"); result.textContent = "";
+            } else {
+              showToast(data.error||"Feil","error"); result.textContent = "Feil: " + (data.error||"");
+            }
+          } catch (e) {
+            showToast("Nettverksfeil","error"); result.textContent = "Feil: " + e.message;
+          }
+          disableButtons(["saveBtn","cancelBtn"], false);
+        }
+        function setDefaultActionButtons() {
+          const actionDiv = document.getElementById("actionButtons");
+          actionDiv.innerHTML = `
             <button id="getDeviceInfoBtn" onclick="getDeviceInfo()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg">Hent info</button>
             <button id="createDeviceBtn" onclick="createDevice()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg">Opprett enhet</button>
-          </div>
-          <div id="mainResult" class="mt-2 text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded"></div>
-        </div>
-
-        <!-- Seksjon for å opprette enhet -->
-        <div>
-          <h3 class="text-lg font-medium flex items-center gap-2"><i data-lucide="plus-circle" class="w-5 h-5"></i> Opprett enhet</h3>
-          <label for="roleDropdown">Velg rolle:</label>
-          <select id="roleDropdown" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"></select>
-          <input id="visitorName" placeholder="Navn på enhet" class="w-full mt-2 px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700" />
-          <input type="datetime-local" id="expireTime" class="w-full mt-2 px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700" />
-          <label class="inline-flex items-center gap-2 mt-2">
-            <input type="checkbox" id="enabledCheckbox" checked class="h-4 w-4" /> Aktivert
-          </label>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Login-modal for e-post og kode -->
-  <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-sm">
-      <div class="flex flex-col items-center mb-2">
-        <img src="/static/favicon.png" alt="Logo" class="w-12 h-12 rounded mb-2" />
-        <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5"></i> Logg inn</h2>
-      </div>
-      <input id="loginEmail" type="email" placeholder="E-postadresse" autofocus class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700" />
-      <button id="requestAuthBtn" onclick="requestAuthCode()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Be om kode</button>
-      <input id="authCode" placeholder="Kode (f.eks. 123-456)" maxlength="7" inputmode="numeric" oninput="formatCodeInput(this)" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700" />
-      <button id="loginBtn" onclick="verifyAuthCode()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded">Logg inn</button>
-    </div>
-  </div>
-
-  <!-- Modal for visning av enhetsinfo -->
-  <div id="deviceInfoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative">
-      <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="info" class="w-5 h-5"></i> Enhetsinfo</h2>
-      <pre id="deviceInfoPopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"></pre>
-      <button id="closeDeviceInfoBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Lukk</button>
-    </div>
-  </div>
-
-  <!-- Modal for bekreftelse etter opprettelse av enhet -->
-  <div id="createDeviceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-lg relative">
-      <h2 class="text-xl font-semibold flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> Enhet opprettet</h2>
-      <pre id="createDevicePopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"></pre>
-      <button id="closeCreateDeviceBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Lukk</button>
-    </div>
-  </div>
-
-  <script>
-    // Initialiserer Lucide-ikoner
-    lucide.createIcons();
-
-    // ENTER-tast trigger riktig knapp i login-modal
-    document.addEventListener('DOMContentLoaded', function() {
-      const emailInput = document.getElementById('loginEmail');
-      const codeInput = document.getElementById('authCode');
-      const requestAuthBtn = document.getElementById('requestAuthBtn');
-      const loginBtn = document.getElementById('loginBtn');
-      const loginModal = document.getElementById('loginModal');
-
-      emailInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && emailInput.value && !requestAuthBtn.disabled && !loginModal.classList.contains('hidden')) {
-          e.preventDefault();
-          requestAuthBtn.click();
+          `;
+          document.getElementById("macaddr").disabled = false;
         }
-      });
-      codeInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && codeInput.value && !loginBtn.disabled && !loginModal.classList.contains('hidden')) {
-          e.preventDefault();
-          loginBtn.click();
+        function logStatus(msg) {
+          const logDiv = document.getElementById("statusLog"); const now = new Date(); const time = now.toLocaleTimeString(); logDiv.textContent = `[${time}] infoFetched=${infoFetched} | ${msg}`;
         }
-      });
-
-      const closeBtn = document.getElementById('closeDeviceInfoBtn');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', closeDeviceInfoModal);
-      }
-
-      const closeCreateBtn = document.getElementById('closeCreateDeviceBtn');
-      if (closeCreateBtn) {
-        closeCreateBtn.addEventListener('click', closeCreateDeviceModal);
-      }
-    });
-
-    // Viser toast-melding øverst til høyre
-    function showToast(message, type = "success") {
-      const toastContainer = document.getElementById("toastContainer");
-      const toast = document.createElement("div");
-      const color = type === "error" ? "bg-red-600" : "bg-green-600";
-      toast.className = `${color} text-white px-4 py-2 rounded shadow`;
-      toast.textContent = message;
-      toastContainer.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
-    }
-
-    // Formaterer kode-input til 123-456
-    function formatCodeInput(input) {
-      let value = input.value.replace(/[^0-9]/g, "");
-      if (value.length > 3) value = value.slice(0, 3) + "-" + value.slice(3);
-      input.value = value;
-    }
-
-    // Deaktiverer/aktiverer knapper for å hindre dobbelklikk
-    function disableButtons(ids, disabled = true) {
-      ids.forEach(id => document.getElementById(id).disabled = disabled);
-    }
-
-    // Ber backend sende engangskode til e-post
-    async function requestAuthCode() {
-      const email = document.getElementById("loginEmail").value;
-      showToast("Sender kode...");
-      disableButtons(["requestAuthBtn"]);
-      try {
-        const response = await fetch("/request_auth_code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
+        ["roleDropdown","visitorName","expireTime","enabledCheckbox"].forEach(id => {
+          document.getElementById(id).addEventListener("input", () => { logStatus(`Felt endret: ${id}`); if (infoFetched) showEditButtons(); });
         });
-        const data = await response.json();
-        document.getElementById("authCode").value = ""; // Tøm kodefeltet etter innsending
-        if (response.ok) showToast(data.message || "Kode sendt.");
-        else showToast(data.error || "Feil", "error");
-      } catch (e) {
-        showToast("Nettverksfeil", "error");
-      }
-      disableButtons(["requestAuthBtn"], false);
-    }
-
-    // Verifiserer engangskode og logger inn bruker
-    async function verifyAuthCode() {
-      const email = document.getElementById("loginEmail").value;
-      const codeInput = document.getElementById("authCode");
-      const code = codeInput.value.replace(/[^0-9]/g, "").replace(/(.{3})/, "$1-");
-      showToast("Verifiserer...");
-      disableButtons(["loginBtn", "requestAuthBtn"]);
-      try {
-        const response = await fetch("/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code })
+        document.getElementById("macaddr").addEventListener("input", () => { infoFetched = false; logStatus("MAC-adresse endret, infoFetched settes til false"); });
+        document.getElementById("macaddr").addEventListener("keydown", function(e) {
+          if (e.key === "Enter" && !document.getElementById("getDeviceInfoBtn").disabled) {
+            e.preventDefault();
+            document.getElementById("getDeviceInfoBtn").click();
+          }
         });
-        const data = await response.json();
-        codeInput.value = ""; // Tøm kodefeltet etter vellykket innlogging eller forsøk
-        if (response.ok) {
-          showToast("Innlogging vellykket.");
-          window.loggedInEmail = email;
-          setLoggedIn(true);
-        } else {
-          showToast(data.error || "Feil", "error");
+        async function createDevice() {
+          const mac = document.getElementById("macaddr").value.trim();
+          const role_id = document.getElementById("roleDropdown").value;
+          const enabled = document.getElementById("enabledCheckbox").checked;
+          const visitor_name = document.getElementById("visitorName").value.trim();
+          const expireInput = document.getElementById("expireTime").value;
+          const sponsor_name = window.loggedInEmail || "";
+          const sponsor_profile = "1";
+          const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
+          const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
+          const result = document.getElementById("mainResult");
+          result.textContent = "Sender...";
+          disableButtons(["createDeviceBtn", "getDeviceInfoBtn"]);
+          try {
+            const response = await fetch("/create_device", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (response.ok) {
+              showCreateDeviceModal(data);
+              showToast("Enhet opprettet.");
+              result.textContent = "";
+              document.getElementById("sponsorName").value = sponsor_name;
+              infoFetched = true;
+              logStatus("Opprett enhet utført, infoFetched=true");
+            } else {
+              result.textContent = "Feil: " + (data.error || "");
+              showToast(data.error || "Feil", "error");
+            }
+          } catch (e) {
+            result.textContent = "Feil: " + e.message;
+            showToast("Nettverksfeil", "error");
+          }
+          disableButtons(["createDeviceBtn", "getDeviceInfoBtn"], false);
         }
-      } catch (e) {
-        showToast("Nettverksfeil", "error");
-      }
-      disableButtons(["loginBtn", "requestAuthBtn"], false);
-    }
 
-    // Logger ut bruker og skjuler beskyttet innhold
-    async function logout() {
-      await fetch("/logout", { method: "POST" });
-      setLoggedIn(false);
-      showToast("Du er logget ut.");
-    }
-
-    // Viser/skjuler innhold basert på innloggingsstatus
-    function setLoggedIn(loggedIn) {
-      document.getElementById("loginModal").classList.toggle("hidden", loggedIn);
-      document.getElementById("protectedContent").classList.toggle("hidden", !loggedIn);
-      document.getElementById("logoutBtn").classList.toggle("hidden", !loggedIn);
-      if (loggedIn) fetchDeviceRoles();
-    }
-
-    // Henter roller fra backend og fyller dropdown
-    async function fetchDeviceRoles() {
-      try {
-        const response = await fetch("/GetDeviceRoles");
-        const data = await response.json();
-        const dropdown = document.getElementById("roleDropdown");
-        dropdown.innerHTML = "";
-        (data._embedded?.items || data || []).forEach(role => {
-          const option = document.createElement("option");
-          option.value = role.role_id || role.id || role.name;
-          option.textContent = role.name;
-          dropdown.appendChild(option);
-        });
-      } catch {
-        showToast("Feil ved henting av roller", "error");
-      }
-    }
-
-    // Henter enhetsinfo fra backend og viser popup
-    async function getDeviceInfo() {
-      const macaddr = document.getElementById("macaddr").value;
-      const result = document.getElementById("mainResult");
-      result.textContent = "Laster...";
-      disableButtons(["getDeviceInfoBtn", "createDeviceBtn"]);
-      try {
-        const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`);
-        const data = await response.json();
-        if (response.ok) {
-          // Vis popup med pen JSON
-          showDeviceInfoModal(data);
-          showToast("Enhetsinfo hentet.");
-          result.textContent = "";
-        } else {
-          showToast(data.error || "Feil", "error");
-          result.textContent = "Feil: " + (data.error || "");
+        function showDeviceInfoModal(data) {
+          const modal = document.getElementById("deviceInfoModal");
+          const content = document.getElementById("deviceInfoPopupContent");
+          content.textContent = JSON.stringify(data, null, 2);
+          modal.classList.remove("hidden");
+          document.body.classList.add("overflow-hidden");
         }
-      } catch (e) {
-        result.textContent = "Feil: " + e.message;
-        showToast("Nettverksfeil", "error");
-      }
-      disableButtons(["getDeviceInfoBtn", "createDeviceBtn"], false);
-    }
 
-    // Viser popup med enhetsinfo
-    function showDeviceInfoModal(data) {
-      const modal = document.getElementById("deviceInfoModal");
-      const content = document.getElementById("deviceInfoPopupContent");
-      content.textContent = JSON.stringify(data, null, 2);
-      modal.classList.remove("hidden");
-      document.body.classList.add("overflow-hidden");
-    }
-
-    // Lukker enhetsinfo-popup
-    function closeDeviceInfoModal() {
-      const modal = document.getElementById("deviceInfoModal");
-      modal.classList.add("hidden");
-      document.body.classList.remove("overflow-hidden");
-    }
-
-    // Sender forespørsel om å opprette enhet
-    async function createDevice() {
-      const mac = document.getElementById("macaddr").value.trim();
-      const role_id = document.getElementById("roleDropdown").value;
-      const enabled = document.getElementById("enabledCheckbox").checked;
-      const visitor_name = document.getElementById("visitorName").value.trim();
-      const expireInput = document.getElementById("expireTime").value;
-      const sponsor_name = window.loggedInEmail || "";
-      const sponsor_profile = "1";
-      const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
-      const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
-      const result = document.getElementById("mainResult");
-      result.textContent = "Sender...";
-      disableButtons(["createDeviceBtn", "getDeviceInfoBtn"]);
-      try {
-        const response = await fetch("/create_device", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        if (response.ok) {
-          showCreateDeviceModal(data);
-          showToast("Enhet opprettet.");
-          result.textContent = "";
-        } else {
-          result.textContent = "Feil: " + (data.error || "");
-          showToast(data.error || "Feil", "error");
+        function closeDeviceInfoModal() {
+          const modal = document.getElementById("deviceInfoModal");
+          modal.classList.add("hidden");
+          document.body.classList.remove("overflow-hidden");
         }
-      } catch (e) {
-        result.textContent = "Feil: " + e.message;
-        showToast("Nettverksfeil", "error");
-      }
-      disableButtons(["createDeviceBtn", "getDeviceInfoBtn"], false);
-    }
 
-    // Viser popup etter opprettelse av enhet
-    function showCreateDeviceModal(data) {
-      const modal = document.getElementById("createDeviceModal");
-      const content = document.getElementById("createDevicePopupContent");
-      content.textContent = JSON.stringify(data, null, 2);
-      modal.classList.remove("hidden");
-      document.body.classList.add("overflow-hidden");
-    }
+        function showCreateDeviceModal(data) {
+          const modal = document.getElementById("createDeviceModal");
+          const content = document.getElementById("createDevicePopupContent");
+          content.textContent = JSON.stringify(data, null, 2);
+          modal.classList.remove("hidden");
+          document.body.classList.add("overflow-hidden");
+        }
 
-    // Lukker opprettet-enhet-popup
-    function closeCreateDeviceModal() {
-      const modal = document.getElementById("createDeviceModal");
-      modal.classList.add("hidden");
-      document.body.classList.remove("overflow-hidden");
-    }
+        function closeCreateDeviceModal() {
+          const modal = document.getElementById("createDeviceModal");
+          modal.classList.add("hidden");
+          document.body.classList.remove("overflow-hidden");
+        }
 
-    // Sjekker innloggingsstatus ved lasting av siden
-    window.onload = async () => {
-      try {
-        const response = await fetch("/is_logged_in");
-        const data = await response.json();
-        setLoggedIn(data.logged_in === true);
-      } catch {
-        setLoggedIn(false);
-      }
-    }
-  </script>
-</body>
+        window.onload = async () => {
+          try {
+            const response = await fetch("/is_logged_in");
+            const data = await response.json();
+            setLoggedIn(data.logged_in === true);
+          } catch {
+            setLoggedIn(false);
+          }
+        }
+    </script>
+  </body>
 </html>
