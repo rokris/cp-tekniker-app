@@ -4,33 +4,20 @@
 // Importerer og kobler sammen autentisering, enhetsoperasjoner, modalhåndtering og UI-funksjoner.
 
 import { showToast, requestAuthCode, verifyAuthCode, logout } from './auth.js';
-import { fetchDeviceRoles, getDeviceInfo, createDevice, infoFetched, lastFetchedDeviceInfo, setInfoFetched } from './device.js';
+import { fetchDeviceRoles, getDeviceInfo, createDevice, infoFetched, lastFetchedDeviceInfo, setInfoFetched, updateDevice } from './device.js';
 import { showDeviceInfoModal as _showDeviceInfoModal, closeDeviceInfoModal as _closeDeviceInfoModal, showCreateDeviceModal as _showCreateDeviceModal, closeCreateDeviceModal as _closeCreateDeviceModal } from './modal.js';
 import { disableButtons, resetFieldsToDefault, setLoggedIn, showEditButtons, setDefaultActionButtons } from './ui.js';
 
 window.saveEdits = async function () {
-    const mac = document.getElementById("macaddr").value.trim();
-    const role_id = document.getElementById("roleDropdown").value;
-    const enabled = document.getElementById("enabledCheckbox").checked;
-    const visitor_name = document.getElementById("visitorName").value.trim();
-    const expireInput = document.getElementById("expireTime").value;
-    const sponsor_name = window.loggedInEmail || "";
-    const sponsor_profile = "1";
-    const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
-    const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
-    disableButtons(["saveBtn", "cancelBtn"]);
-    try {
-        const response = await fetch("/update_device", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        const data = await response.json();
-        if (response.ok) {
-            showToast("Endringer lagret."); setDefaultActionButtons(() => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons), () => createDevice(showToast, showCreateDeviceModal, disableButtons));
-        } else {
-            showToast(data.error || "Feil", "error");
-        }
-    } catch (e) {
-        showToast("Nettverksfeil", "error");
+    // Kall updateDevice (PATCH) i stedet for å gjøre POST her
+    const result = await updateDevice(showToast, disableButtons);
+    if (result) {
+        setDefaultActionButtons(
+            () => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons),
+            () => createDevice(showToast, showCreateDeviceModal, disableButtons)
+        );
+        setInfoFetched(false);
     }
-    disableButtons(["saveBtn", "cancelBtn"], false);
 };
 
 window.cancelEdits = function () {

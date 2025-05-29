@@ -116,6 +116,44 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
 }
 
 /**
+ * Oppdaterer enhet basert på feltene i skjemaet og viser tilbakemelding.
+ * @param {Function} showToast - Funksjon for tilbakemelding.
+ * @param {Function} disableButtons - Funksjon for å deaktivere knapper.
+ * @returns {Promise<object|null>} - Returnerer responsdata eller null ved feil.
+ */
+export async function updateDevice(showToast, disableButtons) {
+    const mac = document.getElementById("macaddr").value.trim();
+    const role_id = document.getElementById("roleDropdown").value;
+    const enabled = document.getElementById("enabledCheckbox").checked;
+    const visitor_name = document.getElementById("visitorName").value.trim();
+    const expireInput = document.getElementById("expireTime").value;
+    const sponsor_name = window.loggedInEmail || "";
+    const sponsor_profile = "1";
+    const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
+    const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
+    showToast("Lagrer endringer...");
+    disableButtons(["saveBtn", "cancelBtn"]);
+    try {
+        const response = await fetch("/update_device", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showToast("Endringer lagret.");
+            return data;
+        } else {
+            showToast(data.error || "Feil", "error");
+        }
+    } catch (e) {
+        showToast("Nettverksfeil", "error");
+    }
+    disableButtons(["saveBtn", "cancelBtn"], false);
+    return null;
+}
+
+/**
  * Setter status for om enhetsinfo er hentet.
  * @param {boolean} val - Ny verdi for infoFetched.
  */
