@@ -114,3 +114,11 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
     }
     disableButtons(["createDeviceBtn", "getDeviceInfoBtn"], false);
 }
+
+/**
+ * Setter status for om enhetsinfo er hentet.
+ * @param {boolean} val - Ny verdi for infoFetched.
+ */
+export function setInfoFetched(val) {
+    infoFetched = val;
+}

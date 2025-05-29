@@ -4,8 +4,8 @@
 // Importerer og kobler sammen autentisering, enhetsoperasjoner, modalhåndtering og UI-funksjoner.
 
 import { showToast, requestAuthCode, verifyAuthCode, logout } from './auth.js';
-import { fetchDeviceRoles, getDeviceInfo, createDevice, infoFetched, lastFetchedDeviceInfo } from './device.js';
-import { showDeviceInfoModal, closeDeviceInfoModal, showCreateDeviceModal, closeCreateDeviceModal } from './modal.js';
+import { fetchDeviceRoles, getDeviceInfo, createDevice, infoFetched, lastFetchedDeviceInfo, setInfoFetched } from './device.js';
+import { showDeviceInfoModal as _showDeviceInfoModal, closeDeviceInfoModal as _closeDeviceInfoModal, showCreateDeviceModal as _showCreateDeviceModal, closeCreateDeviceModal as _closeCreateDeviceModal } from './modal.js';
 import { disableButtons, resetFieldsToDefault, setLoggedIn, showEditButtons, setDefaultActionButtons } from './ui.js';
 
 window.saveEdits = async function () {
@@ -49,10 +49,95 @@ window.cancelEdits = function () {
     setDefaultActionButtons(() => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons), () => createDevice(showToast, showCreateDeviceModal, disableButtons));
 };
 
-// Event listeners og applikasjonslogikk følger under
+// Hjelpefunksjoner for å enable/disable Enter-funksjonalitet på loginEmail og authCode
+let loginEmailEnterHandler = null;
+let authCodeEnterHandler = null;
+
+function enableLoginEnter() {
+    const loginEmail = document.getElementById('loginEmail');
+    if (!loginEmailEnterHandler) {
+        loginEmailEnterHandler = function(e) {
+            // Bare tillat Enter hvis loginModal er synlig og ingen andre modaler er åpne
+            const loginModal = document.getElementById('loginModal');
+            const deviceInfoModal = document.getElementById('deviceInfoModal');
+            const createDeviceModal = document.getElementById('createDeviceModal');
+            if (
+                e.key === 'Enter' &&
+                !document.getElementById('requestAuthBtn').disabled &&
+                !loginModal.classList.contains('hidden') &&
+                deviceInfoModal.classList.contains('hidden') &&
+                createDeviceModal.classList.contains('hidden')
+            ) {
+                e.preventDefault();
+                requestAuthCode(disableButtons);
+            }
+        };
+        loginEmail.addEventListener('keydown', loginEmailEnterHandler);
+    }
+}
+function disableLoginEnter() {
+    const loginEmail = document.getElementById('loginEmail');
+    if (loginEmailEnterHandler) {
+        loginEmail.removeEventListener('keydown', loginEmailEnterHandler);
+        loginEmailEnterHandler = null;
+    }
+}
+function enableAuthCodeEnter() {
+    const authCode = document.getElementById('authCode');
+    if (!authCodeEnterHandler) {
+        authCodeEnterHandler = function(e) {
+            // Bare tillat Enter hvis loginModal er synlig og ingen andre modaler er åpne
+            const loginModal = document.getElementById('loginModal');
+            const deviceInfoModal = document.getElementById('deviceInfoModal');
+            const createDeviceModal = document.getElementById('createDeviceModal');
+            if (
+                e.key === 'Enter' &&
+                !document.getElementById('loginBtn').disabled &&
+                !loginModal.classList.contains('hidden') &&
+                deviceInfoModal.classList.contains('hidden') &&
+                createDeviceModal.classList.contains('hidden')
+            ) {
+                e.preventDefault();
+                verifyAuthCode((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), disableButtons);
+            }
+        };
+        authCode.addEventListener('keydown', authCodeEnterHandler);
+    }
+}
+function disableAuthCodeEnter() {
+    const authCode = document.getElementById('authCode');
+    if (authCodeEnterHandler) {
+        authCode.removeEventListener('keydown', authCodeEnterHandler);
+        authCodeEnterHandler = null;
+    }
+}
+
+// Wrap modal show/hide for å disable/enable Enter-funksjonalitet
+export function showDeviceInfoModal(data) {
+    disableLoginEnter();
+    disableAuthCodeEnter();
+    _showDeviceInfoModal(data);
+}
+export function closeDeviceInfoModal() {
+    _closeDeviceInfoModal();
+    enableLoginEnter();
+    enableAuthCodeEnter();
+}
+export function showCreateDeviceModal(data) {
+    disableLoginEnter();
+    disableAuthCodeEnter();
+    _showCreateDeviceModal(data);
+}
+export function closeCreateDeviceModal() {
+    _closeCreateDeviceModal();
+    enableLoginEnter();
+    enableAuthCodeEnter();
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     lucide.createIcons();
+    enableLoginEnter();
+    enableAuthCodeEnter();
     document.getElementById('closeDeviceInfoBtn').addEventListener('click', closeDeviceInfoModal);
     document.getElementById('closeCreateDeviceBtn').addEventListener('click', closeCreateDeviceModal);
     document.getElementById('requestAuthBtn').addEventListener('click', () => requestAuthCode(disableButtons));
@@ -66,31 +151,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
     document.getElementById("macaddr").addEventListener("input", () => {
-        // Endre fra setInfoFetched(false) til direkte setting av infoFetched
-        // setInfoFetched(false);
-        // Siden infoFetched er en importert let-variabel, må vi sette den via window eller lignende hvis vi vil endre den globalt.
-        // Men i ES6-moduler er importerte bindings readonly, så vi må endre strategi:
-        // Løsning: Flytt infoFetched til window.infoFetched og bruk window.infoFetched = false;
-        // Men for nå, kommenter ut eller fjern denne linjen hvis det ikke er kritisk.
-        // Alternativ: Hvis du trenger å kunne sette infoFetched, må du lage en setter i device.js og bruke den.
-        // For nå, fjern bare kallet.
+        setInfoFetched(false);
     });
     document.getElementById("macaddr").addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !document.getElementById("getDeviceInfoBtn").disabled) {
+        const deviceInfoModal = document.getElementById('deviceInfoModal');
+        const createDeviceModal = document.getElementById('createDeviceModal');
+        if (
+            e.key === "Enter" &&
+            !document.getElementById("getDeviceInfoBtn").disabled &&
+            deviceInfoModal.classList.contains('hidden') &&
+            createDeviceModal.classList.contains('hidden')
+        ) {
             e.preventDefault();
             getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons);
-        }
-    });
-    document.getElementById('loginEmail').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !document.getElementById('requestAuthBtn').disabled) {
-            e.preventDefault();
-            requestAuthCode(disableButtons);
-        }
-    });
-    document.getElementById('authCode').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
-            e.preventDefault();
-            verifyAuthCode((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), disableButtons);
         }
     });
 });
