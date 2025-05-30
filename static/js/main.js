@@ -130,13 +130,24 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('requestAuthBtn').addEventListener('click', () => requestAuthCode(disableButtons));
     document.getElementById('loginBtn').addEventListener('click', () => verifyAuthCode((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), disableButtons));
     document.getElementById('logoutBtn').addEventListener('click', () => logout((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), showToast));
-    // Add event listener for the download icon button
     document.getElementById('getDeviceInfoBtn').addEventListener('click', () => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons));
-    document.getElementById('createDeviceBtn').addEventListener('click', () => createDevice(showToast, showCreateDeviceModal, disableButtons));
+    // Ikke legg til createDeviceBtn her, FAB håndteres av setDefaultActionButtons
     ["roleDropdown", "visitorName", "expireTime", "enabledCheckbox"].forEach(id => {
-        document.getElementById(id).addEventListener("input", () => {
-            if (infoFetched) showEditButtons(window.saveEdits, window.cancelEdits);
-        });
+        const el = document.getElementById(id);
+        if (el.tagName === 'SELECT' || el.type === 'checkbox') {
+            el.addEventListener("change", () => {
+                // Ikke trigge edit-modus hvis info ikke er hentet
+                if (infoFetched && !el.readOnly && !el.disabled && !document.getElementById("saveBtn") && !document.getElementById("cancelBtn")) {
+                    showEditButtons(window.saveEdits, window.cancelEdits);
+                }
+            });
+        } else {
+            el.addEventListener("input", () => {
+                if (infoFetched && !el.readOnly && !el.disabled && !document.getElementById("saveBtn") && !document.getElementById("cancelBtn")) {
+                    showEditButtons(window.saveEdits, window.cancelEdits);
+                }
+            });
+        }
     });
     document.getElementById("macaddr").addEventListener("input", () => {
         setInfoFetched(false);
@@ -148,7 +159,6 @@ document.addEventListener('DOMContentLoaded', function () {
             dropdown.value = dropdown.options[0].value;
         }
     });
-    // Add event listener for Enter key on the input field
     document.getElementById("macaddr").addEventListener("keydown", function (e) {
         const deviceInfoModal = document.getElementById('deviceInfoModal');
         const createDeviceModal = document.getElementById('createDeviceModal');
@@ -162,6 +172,8 @@ document.addEventListener('DOMContentLoaded', function () {
             getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons);
         }
     });
+    // Sørg for at FAB alltid finnes etter login/refresh
+    setDefaultActionButtons(() => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons), () => createDevice(showToast, showCreateDeviceModal, disableButtons));
 });
 
 window.onload = async () => {

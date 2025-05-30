@@ -60,16 +60,27 @@ export function showEditButtons(saveEdits, cancelEdits) {
  * @param {Function} getDeviceInfo - Callback for å hente enhetsinfo.
  * @param {Function} createDevice - Callback for å opprette enhet.
  */
+// Sørg for at FAB alltid vises når standard action buttons settes
 export function setDefaultActionButtons(getDeviceInfo, createDevice) {
     const actionDiv = document.getElementById("actionButtons");
     // Fjern "ukjent rolle" fra dropdown før standard handling
     const dropdown = document.getElementById("roleDropdown");
     const unknownOpt = dropdown.querySelector('option[data-unknown-role]');
     if (unknownOpt) unknownOpt.remove();
-    // Ikke legg til "Hent info"-knapp her, kun Opprett enhet
-    actionDiv.innerHTML = `
-    <button id="createDeviceBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg">Opprett enhet</button>
-  `;
+    // Ikke legg til noen knapp i actionButtons, FAB brukes nå
+    actionDiv.innerHTML = "";
     document.getElementById("macaddr").disabled = false;
-    document.getElementById("createDeviceBtn").addEventListener("click", createDevice);
+    // Hvis FAB ikke finnes, legg den til i DOM
+    if (!document.getElementById("createDeviceBtn")) {
+        const fab = document.createElement("button");
+        fab.id = "createDeviceBtn";
+        fab.className = "fixed bottom-8 right-8 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg w-16 h-16 flex items-center justify-center text-3xl focus:outline-none";
+        fab.title = "Opprett enhet";
+        fab.style.boxShadow = "0 4px 16px rgba(0,80,200,0.18)";
+        fab.innerHTML = '<i data-lucide="plus" class="w-8 h-8"></i>';
+        document.body.appendChild(fab);
+        lucide.createIcons();
+        // Bruker createDevice direkte, ikke showToast/showCreateDeviceModal/disableButtons
+        fab.addEventListener('click', createDevice);
+    }
 }
