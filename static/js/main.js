@@ -4,7 +4,7 @@
 // Importerer og kobler sammen autentisering, enhetsoperasjoner, modalhåndtering og UI-funksjoner.
 
 import { showToast, requestAuthCode, verifyAuthCode, logout } from './auth.js';
-import { fetchDeviceRoles, getDeviceInfo, createDevice, infoFetched, lastFetchedDeviceInfo, setInfoFetched, updateDevice } from './device.js';
+import { fetchDeviceRoles, getDeviceInfo, createDevice, infoFetched, lastFetchedDeviceInfo, setInfoFetched, updateDevice, setDeviceFieldsReadonly } from './device.js';
 import { showDeviceInfoModal as _showDeviceInfoModal, closeDeviceInfoModal as _closeDeviceInfoModal, showCreateDeviceModal as _showCreateDeviceModal, closeCreateDeviceModal as _closeCreateDeviceModal } from './modal.js';
 import { disableButtons, resetFieldsToDefault, setLoggedIn, showEditButtons, setDefaultActionButtons } from './ui.js';
 
@@ -139,6 +139,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.getElementById("macaddr").addEventListener("input", () => {
         setInfoFetched(false);
+        // Fjern readonly-modus
+        setDeviceFieldsReadonly(false);
+        // Tilbakestill felter
+        resetFieldsToDefault();
+        // Fjern ukjent rolle fra dropdown og sett til default
+        const dropdown = document.getElementById("roleDropdown");
+        Array.from(dropdown.querySelectorAll('option[data-unknown-role]')).forEach(opt => opt.remove());
+        if (dropdown.options.length > 0) {
+            dropdown.value = dropdown.options[0].value;
+        }
     });
     document.getElementById("macaddr").addEventListener("keydown", function (e) {
         const deviceInfoModal = document.getElementById('deviceInfoModal');

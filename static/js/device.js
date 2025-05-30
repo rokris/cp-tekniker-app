@@ -51,7 +51,31 @@ export async function getDeviceInfo(showToast, resetFieldsToDefault, showDeviceI
         const data = await response.json();
         if (response.ok) {
             showDeviceInfoModal(data);
-            document.getElementById("roleDropdown").value = data.role_id || "";
+            const dropdown = document.getElementById("roleDropdown");
+            // Fjern ALLTID tidligere "ukjent rolle" hvis den finnes
+            Array.from(dropdown.querySelectorAll('option[data-unknown-role]')).forEach(opt => opt.remove());
+            // Sjekk om rollen finnes i dropdown, hvis ikke legg til som valgt option (kun for visning)
+            let found = false;
+            for (let i = 0; i < dropdown.options.length; i++) {
+                if (dropdown.options[i].value == (data.role_id || "")) {
+                    found = true;
+                    break;
+                }
+            }
+            let isUnknownRole = false;
+            if (!found && data.role_id && data.role_name) {
+                const opt = document.createElement("option");
+                opt.value = data.role_id;
+                opt.textContent = data.role_name + " (ukjent/ikke tillatt)";
+                opt.selected = true;
+                opt.setAttribute('data-unknown-role', '1');
+                opt.disabled = true;
+                dropdown.appendChild(opt);
+                dropdown.value = data.role_id;
+                isUnknownRole = true;
+            } else {
+                dropdown.value = data.role_id || (dropdown.options.length > 0 ? dropdown.options[0].value : "");
+            }
             document.getElementById("visitorName").value = data.visitor_name || "";
             if (data.expire_time) {
                 const dt = new Date(data.expire_time * 1000);
@@ -64,6 +88,11 @@ export async function getDeviceInfo(showToast, resetFieldsToDefault, showDeviceI
             document.getElementById("sponsorName").value = data.sponsor_name || "";
             infoFetched = true;
             lastFetchedDeviceInfo = data;
+            // --- NY LOGIKK: Sett readonly hvis ukjent rolle eller feil sponsor ---
+            const loggedInEmail = window.loggedInEmail || "";
+            const isOtherSponsor = (data.sponsor_name && data.sponsor_name !== loggedInEmail);
+            const readonly = isUnknownRole || isOtherSponsor;
+            setDeviceFieldsReadonly(readonly);
             showToast("Enhetsinfo hentet.");
         } else {
             showToast(data.error || "Feil", "error");
@@ -74,6 +103,35 @@ export async function getDeviceInfo(showToast, resetFieldsToDefault, showDeviceI
         resetFieldsToDefault();
     }
     disableButtons(["getDeviceInfoBtn", "createDeviceBtn"], false);
+}
+
+// Hjelpefunksjon for å sette alle felter readonly og hindre Endre-modus
+export function setDeviceFieldsReadonly(readonly) {
+    document.getElementById("roleDropdown").disabled = readonly;
+    document.getElementById("visitorName").readOnly = readonly;
+    document.getElementById("expireTime").readOnly = readonly;
+    document.getElementById("enabledCheckbox").disabled = readonly;
+    // Hindrer Endre-modus ved input hvis readonly
+    const actionFields = ["roleDropdown", "visitorName", "expireTime", "enabledCheckbox"];
+    actionFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (readonly) {
+            el.classList.add("pointer-events-none", "opacity-60");
+        } else {
+            el.classList.remove("pointer-events-none", "opacity-60");
+        }
+    });
+    // Hindre Endre-modus: fjern eventuelle edit-knapper hvis readonly
+    if (readonly) {
+        const actionDiv = document.getElementById("actionButtons");
+        // Sett tilbake til standard knapper hvis de er i edit-modus
+        if (document.getElementById("saveBtn") || document.getElementById("cancelBtn")) {
+            actionDiv.innerHTML = `
+                <button id="getDeviceInfoBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg">Hent info</button>
+                <button id="createDeviceBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg">Opprett enhet</button>
+            `;
+        }
+    }
 }
 
 /**
@@ -87,6 +145,10 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
     const role_id = document.getElementById("roleDropdown").value;
     const enabled = document.getElementById("enabledCheckbox").checked;
     const visitor_name = document.getElementById("visitorName").value.trim();
+    if (!visitor_name) {
+        showToast("Feltet 'Navn på enhet' må fylles ut.", "error");
+        return;
+    }
     const expireInput = document.getElementById("expireTime").value;
     const sponsor_name = window.loggedInEmail || "";
     const sponsor_profile = "1";
@@ -122,10 +184,22 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
  * @returns {Promise<object|null>} - Returnerer responsdata eller null ved feil.
  */
 export async function updateDevice(showToast, disableButtons) {
+    const dropdown = document.getElementById("roleDropdown");
+    const selectedOpt = dropdown.options[dropdown.selectedIndex];
+    const visitor_name = document.getElementById("visitorName").value.trim();
+    if (!visitor_name) {
+        showToast("Feltet 'Navn på enhet' må fylles ut.", "error");
+        disableButtons(["saveBtn", "cancelBtn"], false);
+        return null;
+    }
+    if (selectedOpt && selectedOpt.hasAttribute('data-unknown-role')) {
+        showToast("Kan ikke lagre med ukjent rolle.", "error");
+        disableButtons(["saveBtn", "cancelBtn"], false);
+        return null;
+    }
     const mac = document.getElementById("macaddr").value.trim();
     const role_id = document.getElementById("roleDropdown").value;
     const enabled = document.getElementById("enabledCheckbox").checked;
-    const visitor_name = document.getElementById("visitorName").value.trim();
     const expireInput = document.getElementById("expireTime").value;
     const sponsor_name = window.loggedInEmail || "";
     const sponsor_profile = "1";

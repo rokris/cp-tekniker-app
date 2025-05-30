@@ -42,6 +42,10 @@ export function setLoggedIn(loggedIn, fetchDeviceRoles) {
  */
 export function showEditButtons(saveEdits, cancelEdits) {
     const actionDiv = document.getElementById("actionButtons");
+    // Fjern "ukjent rolle" fra dropdown før redigering
+    const dropdown = document.getElementById("roleDropdown");
+    const unknownOpt = dropdown.querySelector('option[data-unknown-role]');
+    if (unknownOpt) unknownOpt.remove();
     actionDiv.innerHTML = `
     <button id="saveBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">Lagre</button>
     <button id="cancelBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg">Avbryt</button>
@@ -58,6 +62,10 @@ export function showEditButtons(saveEdits, cancelEdits) {
  */
 export function setDefaultActionButtons(getDeviceInfo, createDevice) {
     const actionDiv = document.getElementById("actionButtons");
+    // Fjern "ukjent rolle" fra dropdown før standard handling
+    const dropdown = document.getElementById("roleDropdown");
+    const unknownOpt = dropdown.querySelector('option[data-unknown-role]');
+    if (unknownOpt) unknownOpt.remove();
     actionDiv.innerHTML = `
     <button id="getDeviceInfoBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg">Hent info</button>
     <button id="createDeviceBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg">Opprett enhet</button>
