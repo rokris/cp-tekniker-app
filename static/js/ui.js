@@ -66,11 +66,10 @@ export function setDefaultActionButtons(getDeviceInfo, createDevice) {
     const dropdown = document.getElementById("roleDropdown");
     const unknownOpt = dropdown.querySelector('option[data-unknown-role]');
     if (unknownOpt) unknownOpt.remove();
+    // Ikke legg til "Hent info"-knapp her, kun Opprett enhet
     actionDiv.innerHTML = `
-    <button id="getDeviceInfoBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg">Hent info</button>
     <button id="createDeviceBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg">Opprett enhet</button>
   `;
     document.getElementById("macaddr").disabled = false;
-    document.getElementById("getDeviceInfoBtn").addEventListener("click", getDeviceInfo);
     document.getElementById("createDeviceBtn").addEventListener("click", createDevice);
 }

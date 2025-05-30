@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('requestAuthBtn').addEventListener('click', () => requestAuthCode(disableButtons));
     document.getElementById('loginBtn').addEventListener('click', () => verifyAuthCode((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), disableButtons));
     document.getElementById('logoutBtn').addEventListener('click', () => logout((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), showToast));
+    // Add event listener for the download icon button
     document.getElementById('getDeviceInfoBtn').addEventListener('click', () => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons));
     document.getElementById('createDeviceBtn').addEventListener('click', () => createDevice(showToast, showCreateDeviceModal, disableButtons));
     ["roleDropdown", "visitorName", "expireTime", "enabledCheckbox"].forEach(id => {
@@ -139,17 +140,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.getElementById("macaddr").addEventListener("input", () => {
         setInfoFetched(false);
-        // Fjern readonly-modus
         setDeviceFieldsReadonly(false);
-        // Tilbakestill felter
         resetFieldsToDefault();
-        // Fjern ukjent rolle fra dropdown og sett til default
         const dropdown = document.getElementById("roleDropdown");
         Array.from(dropdown.querySelectorAll('option[data-unknown-role]')).forEach(opt => opt.remove());
         if (dropdown.options.length > 0) {
             dropdown.value = dropdown.options[0].value;
         }
     });
+    // Add event listener for Enter key on the input field
     document.getElementById("macaddr").addEventListener("keydown", function (e) {
         const deviceInfoModal = document.getElementById('deviceInfoModal');
         const createDeviceModal = document.getElementById('createDeviceModal');
