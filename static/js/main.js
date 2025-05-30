@@ -12,11 +12,12 @@ window.saveEdits = async function () {
     // Kall updateDevice (PATCH) i stedet for å gjøre POST her
     const result = await updateDevice(showToast, disableButtons);
     if (result) {
+        // Ikke tilbakestill infoFetched her, behold edit-modus aktiv
         setDefaultActionButtons(
             () => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons),
             () => createDevice(showToast, showCreateDeviceModal, disableButtons)
         );
-        setInfoFetched(false);
+        // Ikke: setInfoFetched(false);
     }
 };
 
@@ -176,12 +177,31 @@ document.addEventListener('DOMContentLoaded', function () {
     setDefaultActionButtons(() => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons), () => createDevice(showToast, showCreateDeviceModal, disableButtons));
 });
 
+// Etter login eller refresh, hent e-post fra backend og sett sponsorName-feltet og window.loggedInEmail
+window.setSponsorNameFromBackend = function(email) {
+    window.loggedInEmail = email;
+    const sponsorInput = document.getElementById("sponsorName");
+    if (sponsorInput) sponsorInput.value = email || "";
+};
+
+// Oppdater window.onload for å hente e-post fra backend
 window.onload = async () => {
     try {
         const response = await fetch("/is_logged_in");
         const data = await response.json();
         setLoggedIn(data.logged_in === true, fetchDeviceRoles);
+        // Sett sponsorName-feltet hvis e-post finnes
+        if (data.logged_in && data.email) {
+            window.setSponsorNameFromBackend(data.email);
+        }
     } catch {
         setLoggedIn(false, fetchDeviceRoles);
     }
 };
+
+// Etter vellykket login, sett sponsorName-feltet og window.loggedInEmail
+function afterLoginSuccess(data) {
+    if (data && data.email) {
+        window.setSponsorNameFromBackend(data.email);
+    }
+}
