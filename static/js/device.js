@@ -192,11 +192,6 @@ export async function updateDevice(showToast, disableButtons) {
         disableButtons(["saveBtn", "cancelBtn"], false);
         return null;
     }
-    if (selectedOpt && selectedOpt.hasAttribute('data-unknown-role')) {
-        showToast("Kan ikke lagre med ukjent rolle.", "error");
-        disableButtons(["saveBtn", "cancelBtn"], false);
-        return null;
-    }
     const mac = document.getElementById("macaddr").value.trim();
     const role_id = document.getElementById("roleDropdown").value;
     const enabled = document.getElementById("enabledCheckbox").checked;

@@ -32,6 +32,12 @@ export function setLoggedIn(loggedIn, fetchDeviceRoles) {
     document.getElementById("loginModal").classList.toggle("hidden", loggedIn);
     document.getElementById("protectedContent").classList.toggle("hidden", !loggedIn);
     document.getElementById("logoutBtn").classList.toggle("hidden", !loggedIn);
+    // Skjul eller vis FAB avhengig av innloggingsstatus
+    const fab = document.getElementById("createDeviceBtn");
+    if (fab) {
+        fab.style.display = loggedIn ? "flex" : "none";
+        fab.disabled = !loggedIn;
+    }
     if (loggedIn) fetchDeviceRoles();
 }
 
@@ -47,8 +53,8 @@ export function showEditButtons(saveEdits, cancelEdits) {
     const unknownOpt = dropdown.querySelector('option[data-unknown-role]');
     if (unknownOpt) unknownOpt.remove();
     actionDiv.innerHTML = `
-    <button id="saveBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">Lagre</button>
-    <button id="cancelBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg">Avbryt</button>
+    <button id="saveBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Lagre</button>
+    <button id="cancelBtn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-black py-2 rounded-lg border border-gray-400">Avbryt</button>
   `;
     document.getElementById("macaddr").disabled = true;
     document.getElementById("saveBtn").addEventListener("click", saveEdits);
