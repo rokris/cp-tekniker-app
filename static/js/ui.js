@@ -47,18 +47,31 @@ export function setLoggedIn(loggedIn, fetchDeviceRoles) {
  * @param {Function} cancelEdits - Callback for avbryt.
  */
 export function showEditButtons(saveEdits, cancelEdits) {
-    const actionDiv = document.getElementById("actionButtons");
-    // Fjern "ukjent rolle" fra dropdown før redigering
-    const dropdown = document.getElementById("roleDropdown");
-    const unknownOpt = dropdown.querySelector('option[data-unknown-role]');
-    if (unknownOpt) unknownOpt.remove();
-    actionDiv.innerHTML = `
-    <button id="saveBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Lagre</button>
-    <button id="cancelBtn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-black py-2 rounded-lg border border-gray-400">Avbryt</button>
-  `;
+    // Fjern eksisterende FABs hvis de finnes
+    const oldSaveFab = document.getElementById("saveFabBtn");
+    const oldCancelFab = document.getElementById("cancelFabBtn");
+    if (oldSaveFab) oldSaveFab.remove();
+    if (oldCancelFab) oldCancelFab.remove();
+    // Lagre FAB
+    const saveFab = document.createElement("button");
+    saveFab.id = "saveFabBtn";
+    saveFab.className = "fixed bottom-8 right-24 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg w-16 h-16 flex items-center justify-center text-3xl focus:outline-none";
+    saveFab.title = "Lagre endringer";
+    saveFab.style.boxShadow = "0 4px 16px rgba(0,160,80,0.18)";
+    saveFab.innerHTML = '<i data-lucide="save" class="w-8 h-8"></i>';
+    saveFab.addEventListener("click", saveEdits);
+    document.body.appendChild(saveFab);
+    // Avbryt FAB
+    const cancelFab = document.createElement("button");
+    cancelFab.id = "cancelFabBtn";
+    cancelFab.className = "fixed bottom-8 right-8 z-50 bg-gray-200 hover:bg-gray-300 text-black rounded-full shadow-lg w-16 h-16 flex items-center justify-center text-3xl border border-gray-400 focus:outline-none";
+    cancelFab.title = "Avbryt";
+    cancelFab.style.boxShadow = "0 4px 16px rgba(80,80,80,0.12)";
+    cancelFab.innerHTML = '<i data-lucide="x-circle" class="w-8 h-8"></i>';
+    cancelFab.addEventListener("click", cancelEdits);
+    document.body.appendChild(cancelFab);
+    lucide.createIcons();
     document.getElementById("macaddr").disabled = true;
-    document.getElementById("saveBtn").addEventListener("click", saveEdits);
-    document.getElementById("cancelBtn").addEventListener("click", cancelEdits);
 }
 
 /**
@@ -68,6 +81,11 @@ export function showEditButtons(saveEdits, cancelEdits) {
  */
 // Sørg for at FAB alltid vises når standard action buttons settes
 export function setDefaultActionButtons(getDeviceInfo, createDevice) {
+    // Fjern eventuelle edit-FABs
+    const oldSaveFab = document.getElementById("saveFabBtn");
+    const oldCancelFab = document.getElementById("cancelFabBtn");
+    if (oldSaveFab) oldSaveFab.remove();
+    if (oldCancelFab) oldCancelFab.remove();
     const actionDiv = document.getElementById("actionButtons");
     // Fjern "ukjent rolle" fra dropdown før standard handling
     const dropdown = document.getElementById("roleDropdown");
