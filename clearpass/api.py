@@ -119,7 +119,6 @@ def update_device_route():
     macaddr = payload.get("mac")
     if not macaddr:
         return jsonify({"error": "MAC-adresse er påkrevd."}), 400
-    # Fjern mac fra payload før videresending til ClearPass
     patch_payload = dict(payload)
     patch_payload.pop("mac", None)
     device, error = update_device(macaddr, patch_payload)

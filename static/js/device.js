@@ -189,7 +189,7 @@ export async function updateDevice(showToast, disableButtons) {
     const visitor_name = document.getElementById("visitorName").value.trim();
     if (!visitor_name) {
         showToast("Feltet 'Navn på enhet' må fylles ut.", "error");
-        disableButtons(["saveBtn", "cancelBtn"], false);
+        disableButtons(["saveFabBtn", "cancelFabBtn"], false);
         return null;
     }
     const mac = document.getElementById("macaddr").value.trim();
@@ -201,7 +201,7 @@ export async function updateDevice(showToast, disableButtons) {
     const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
     const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
     showToast("Lagrer endringer...");
-    disableButtons(["saveBtn", "cancelBtn"]);
+    disableButtons(["saveFabBtn", "cancelFabBtn"]);
     try {
         const response = await fetch("/update_device", {
             method: "PATCH",
@@ -218,7 +218,7 @@ export async function updateDevice(showToast, disableButtons) {
     } catch (e) {
         showToast("Nettverksfeil", "error");
     }
-    disableButtons(["saveBtn", "cancelBtn"], false);
+    disableButtons(["saveFabBtn", "cancelFabBtn"], false);
     return null;
 }
 
