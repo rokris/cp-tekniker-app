@@ -69,7 +69,10 @@
         <div id="protectedContent" class="hidden space-y-6">
           <div>
             <h3 class="text-lg font-medium flex items-center gap-2">
-              <i data-lucide="search" class="w-5 h-5"></i> Hent enhetsinfo
+              <button id="cameraScanBtn" type="button" class="focus:outline-none p-0 m-0 bg-transparent border-none cursor-pointer">
+                <i data-lucide="camera" class="w-5 h-5 text-black transition-colors hover:text-indigo-600"></i>
+              </button>
+              Scan MAC-adresse
             </h3>
             <div class="relative">
               <input
@@ -80,7 +83,7 @@
               <button
                 id="getDeviceInfoBtn"
                 type="button"
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-indigo-600 focus:outline-none"
+                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-black-500 hover:text-indigo-600 focus:outline-none"
                 title="Hent info"
                 style="background: none; border: none;"
               >
@@ -252,5 +255,57 @@
       Laster hoved-JavaScript (ES6-modul) som binder sammen all frontend-funksjonalitet.
     -->
     <script type="module" src="/static/js/main.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Kamera/QR-skanner for MAC-adresse (Safari/iOS fallback og bedre feilmelding)
+  const cameraBtn = document.getElementById('cameraScanBtn');
+  if (!cameraBtn) return;
+  cameraBtn.addEventListener('click', async () => {
+    const isHttps = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    const hasMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    if (!isHttps) {
+      alert('Kamera krever sikker tilkobling (HTTPS). Gå til https://-versjonen av siden.');
+      return;
+    }
+    if (!hasMedia) {
+      alert('Kamera ikke støttet i denne nettleseren. Prøv Safari på iPhone for best støtte.');
+      return;
+    }
+    // Dynamisk importer QR/Barcode-scanner (bruker zxing-js/browser)
+    const { BrowserMultiFormatReader } = await import('https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.7/esm/index.min.js');
+    const codeReader = new BrowserMultiFormatReader();
+    // Opprett midlertidig video-element
+    let video = document.createElement('video');
+    video.id = 'videoPreview';
+    video.style.width = '100%';
+    video.style.maxWidth = '320px';
+    video.style.margin = '1rem auto';
+    video.style.display = 'block';
+    document.body.appendChild(video);
+    try {
+      const result = await codeReader.decodeOnceFromVideoDevice(undefined, video);
+      const mac = extractMacAddress(result.text);
+      if (mac) {
+        document.getElementById('macaddr').value = mac;
+      } else {
+        alert('Fant ingen gyldig MAC-adresse i tekst, QR eller strekkode.');
+      }
+      codeReader.reset();
+      video.remove();
+    } catch (e) {
+      alert('Ingen kode funnet, ingen tekst funnet, eller kamera avbrutt. Prøv Safari på iPhone for best støtte.');
+      video.remove();
+    }
+  });
+});
+function extractMacAddress(text) {
+  // Gjenkjenner MAC-adresse i tekst, QR eller strekkode: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, XXXXXXXXXXXX
+  const match = text.match(/([0-9A-Fa-f]{2}([:-]?)){5}[0-9A-Fa-f]{2}/);
+  if (match) {
+    return match[0].replace(/[:-]/g, '').toUpperCase();
+  }
+  return null;
+}
+    </script>
   </body>
 </html>
