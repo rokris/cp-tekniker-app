@@ -25,6 +25,10 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(clearpass_api_bp)
 app.register_blueprint(clearpass_routes_bp)
 
+# Etter at app er initialisert og blueprints er registrert:
+from auth.limiter import limiter
+limiter.init_app(app)
+
 @app.route("/")
 def home():
     """Rendrer hovedsiden (index.html). Viser login eller beskyttet innhold avhengig av sesjon."""

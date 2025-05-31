@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, session, current_app as app
 import requests
 from datetime import datetime, timedelta
 from config import Config
+from auth.limiter import limiter
 
 # Token cache for å unngå unødvendige token-forespørsler
 token_cache = {"token": None, "expiry": None}
@@ -84,6 +85,7 @@ def update_device(macaddr, payload):
         return None, "Kunne ikke oppdatere enhet."
 
 @bp.route('/get_device_info', methods=['GET'])
+@limiter.limit("20 per minute")
 def device_info_route():
     """API-endepunkt for å hente enhetsinfo (krever innlogging)."""
     if not session.get("logged_in") or not session.get("session_token"):
@@ -97,6 +99,7 @@ def device_info_route():
     return jsonify(device_info)
 
 @bp.route('/create_device', methods=['POST'])
+@limiter.limit("10 per minute")
 def create_device_route():
     """API-endepunkt for å opprette enhet (krever innlogging)."""
     if not session.get("logged_in") or not session.get("session_token"):
@@ -111,6 +114,7 @@ def create_device_route():
     return jsonify(device), 201
 
 @bp.route('/update_device', methods=['PATCH'])
+@limiter.limit("10 per minute")
 def update_device_route():
     """API-endepunkt for å oppdatere enhet (krever innlogging)."""
     if not session.get("logged_in") or not session.get("session_token"):
