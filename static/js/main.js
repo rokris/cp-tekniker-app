@@ -185,15 +185,28 @@ window.setSponsorNameFromBackend = function (email) {
 // Oppdater window.onload for å hente e-post fra backend
 window.onload = async () => {
     try {
-        const response = await fetch("/is_logged_in");
+        const response = await fetch("/is_logged_in", {
+            method: "GET",
+            credentials: "include"
+        });
         const data = await response.json();
         setLoggedIn(data.logged_in === true, fetchDeviceRoles);
         // Sett sponsorName-feltet hvis e-post finnes
         if (data.logged_in && data.email) {
             window.setSponsorNameFromBackend(data.email);
+            localStorage.setItem("loggedInEmail", data.email);
+        } else {
+            // Prøv å hente fra localStorage hvis ikke logget inn
+            const cachedEmail = localStorage.getItem("loggedInEmail");
+            if (cachedEmail) {
+                window.setSponsorNameFromBackend(cachedEmail);
+            } else {
+                window.setSponsorNameFromBackend("");
+            }
         }
     } catch {
         setLoggedIn(false, fetchDeviceRoles);
+        window.setSponsorNameFromBackend("");
     }
 };
 

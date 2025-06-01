@@ -20,7 +20,10 @@ export let lastFetchedDeviceInfo = null;
  */
 export async function fetchDeviceRoles(showToast) {
     try {
-        const response = await fetch("/GetDeviceRoles");
+        const response = await fetch("/GetDeviceRoles", {
+            method: "GET",
+            credentials: "include"
+        });
         const data = await response.json();
         const dropdown = document.getElementById("roleDropdown");
         dropdown.innerHTML = "";
@@ -47,7 +50,7 @@ export async function getDeviceInfo(showToast, resetFieldsToDefault, showDeviceI
     showToast("Laster...");
     disableButtons(["getDeviceInfoBtn", "createDeviceBtn"]);
     try {
-        const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`);
+        const response = await fetch(`/get_device_info?macaddr=${encodeURIComponent(macaddr)}`, { credentials: "include" });
         const data = await response.json();
         if (response.ok) {
             showDeviceInfoModal(data);
@@ -160,7 +163,8 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
         const response = await fetch("/create_device", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            credentials: "include"
         });
         const data = await response.json();
         if (response.ok) {
@@ -206,7 +210,8 @@ export async function updateDevice(showToast, disableButtons) {
         const response = await fetch("/update_device", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            credentials: "include"
         });
         const data = await response.json();
         if (response.ok) {

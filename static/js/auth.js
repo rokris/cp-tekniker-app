@@ -45,7 +45,12 @@ export async function verifyAuthCode(setLoggedIn, disableButtons) {
     try {
         const response = await fetch("/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, code }) });
         const data = await response.json(); codeInputEl.value = "";
-        if (response.ok) { showToast("Innlogging vellykket."); window.loggedInEmail = email; setLoggedIn(true); } else showToast(data.error || "Feil", "error");
+        if (response.ok) {
+            showToast("Innlogging vellykket.");
+            window.loggedInEmail = email;
+            localStorage.setItem("loggedInEmail", email);
+            setLoggedIn(true);
+        } else showToast(data.error || "Feil", "error");
     } catch { showToast("Nettverksfeil", "error"); }
     disableButtons(["loginBtn", "requestAuthBtn"], false);
 }
