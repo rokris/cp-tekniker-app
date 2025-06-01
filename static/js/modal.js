@@ -43,3 +43,39 @@ export function closeCreateDeviceModal() {
     modal.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
 }
+
+/**
+ * Viser kamera/OCR-modal.
+ */
+export function showCameraModal() {
+    const modal = document.getElementById("cameraModal");
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+}
+
+/**
+ * Skjuler kamera/OCR-modal.
+ */
+export function closeCameraModal() {
+    const modal = document.getElementById("cameraModal");
+    modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+}
+
+/**
+ * Viser login-modal.
+ */
+export function showLoginModal() {
+    const modal = document.getElementById("loginModal");
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+}
+
+/**
+ * Skjuler login-modal.
+ */
+export function closeLoginModal() {
+    const modal = document.getElementById("loginModal");
+    modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+}
