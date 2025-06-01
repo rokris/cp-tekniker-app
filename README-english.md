@@ -4,7 +4,12 @@
 
 # CP-Tekniker Device Management App
 
-A modern, secure, and user-friendly device management solution for NorgesGruppen, built with Flask and designed for Docker. The app is now modularly organized for easy further development and collaboration.
+A modern, secure, and user-friendly device manageme3. **Build and start with Docker:**
+   ```sh
+   docker build -t cp-tekniker-app .
+   docker run -d -p 443:443 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json -v $(pwd)/clearpass/certs:/certs:ro cp-tekniker-app
+   ```
+   The app is available at [https://localhost](https://localhost)ution for NorgesGruppen, built with Flask and designed for Docker. The app is now modularly organized for easy further development and collaboration.
 
 ---
 
@@ -19,6 +24,27 @@ A modern, secure, and user-friendly device management solution for NorgesGruppen
 
 ---
 
+## Frontend Development
+
+To work with the frontend part of the application, you need Node.js installed. The project uses Tailwind CSS for styling.
+
+### Installing npm packages
+
+```bash
+npm install
+```
+
+### Building CSS
+
+To build the CSS files once:
+```bash
+npm run build:css
+```
+
+This will generate the optimized CSS file in `static/css/tailwind.output.css`.
+
+---
+
 ## New Folder & Module Structure
 
 ```
@@ -29,15 +55,19 @@ requirements.txt        # Python dependencies
 Dockerfile              # Docker build instructions
 supervisord.conf        # Runs Redis and Flask app in same container
 
+certs/                 # SSL/HTTPS certificates for the main application
+clearpass/             # ClearPass API and role logic
+    api.py             # API calls and device endpoints (Blueprint)
+    roles.py           # Role and domain handling
+    routes.py          # Role endpoint (Blueprint)
+    certs/            # SSL/HTTPS certificates for ClearPass API communication
+        fullchain.pem  # Full chain certificate
+        privkey.pem    # Private key
+
 auth/                   # Authentication and rate limiting
     limiter.py          # Flask-Limiter setup (Redis)
     routes.py           # Auth endpoints (Blueprint)
     utils.py            # Auth helper functions
-
-clearpass/              # ClearPass API and role logic
-    api.py              # API calls and device endpoints (Blueprint)
-    roles.py            # Role and domain handling
-    routes.py           # Role endpoint (Blueprint)
 
 utils/
     redis.py            # Redis client
@@ -112,6 +142,19 @@ static/
 - **templates/index.html**: The app's frontend. Modern, responsive web interface with Tailwind CSS and Lucide icons. Communicates with the backend via defined API endpoints.
 
 - **config.py**: Central configuration file for the entire application. Reads environment variables from .env and makes them available via the Config class. Used for managing API keys, SMTP, Redis, etc.
+
+- **Certificates**: For secure HTTPS communication, two sets of certificates are used:
+  
+  1. **Main Application Certificates** (`/certs/`):
+     - Used for HTTPS access to the web application itself
+     - Place your SSL certificates here to enable HTTPS
+  
+  2. **ClearPass API Certificates** (`/clearpass/certs/`):
+     - `fullchain.pem`: Certificate chain for ClearPass API
+     - `privkey.pem`: Private key for ClearPass API communication
+     - Required for secure communication with the ClearPass API
+
+Certificate files must be in place before starting the application in production to ensure HTTPS communication.
 
 ---
 

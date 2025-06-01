@@ -256,56 +256,14 @@
     -->
     <script type="module" src="/static/js/main.js"></script>
     <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Kamera/QR-skanner for MAC-adresse (Safari/iOS fallback og bedre feilmelding)
-  const cameraBtn = document.getElementById('cameraScanBtn');
-  if (!cameraBtn) return;
-  cameraBtn.addEventListener('click', async () => {
-    const isHttps = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
-    const hasMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-    if (!isHttps) {
-      alert('Kamera krever sikker tilkobling (HTTPS). Gå til https://-versjonen av siden.');
-      return;
-    }
-    if (!hasMedia) {
-      alert('Kamera ikke støttet i denne nettleseren. Prøv Safari på iPhone for best støtte.');
-      return;
-    }
-    // Dynamisk importer QR/Barcode-scanner (bruker zxing-js/browser)
-    const { BrowserMultiFormatReader } = await import('https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.7/esm/index.min.js');
-    const codeReader = new BrowserMultiFormatReader();
-    // Opprett midlertidig video-element
-    let video = document.createElement('video');
-    video.id = 'videoPreview';
-    video.style.width = '100%';
-    video.style.maxWidth = '320px';
-    video.style.margin = '1rem auto';
-    video.style.display = 'block';
-    document.body.appendChild(video);
-    try {
-      const result = await codeReader.decodeOnceFromVideoDevice(undefined, video);
-      const mac = extractMacAddress(result.text);
-      if (mac) {
-        document.getElementById('macaddr').value = mac;
-      } else {
-        alert('Fant ingen gyldig MAC-adresse i tekst, QR eller strekkode.');
-      }
-      codeReader.reset();
-      video.remove();
-    } catch (e) {
-      alert('Ingen kode funnet, ingen tekst funnet, eller kamera avbrutt. Prøv Safari på iPhone for best støtte.');
-      video.remove();
-    }
-  });
-});
-function extractMacAddress(text) {
-  // Gjenkjenner MAC-adresse i tekst, QR eller strekkode: XX:XX:XX:XX:XX:XX, XX-XX-XX-XX-XX-XX, XXXXXXXXXXXX
-  const match = text.match(/([0-9A-Fa-f]{2}([:-]?)){5}[0-9A-Fa-f]{2}/);
-  if (match) {
-    return match[0].replace(/[:-]/g, '').toUpperCase();
-  }
-  return null;
-}
+    document.addEventListener('DOMContentLoaded', () => {
+      const cameraBtn = document.getElementById('cameraScanBtn');
+      if (!cameraBtn) return;
+      
+      cameraBtn.addEventListener('click', () => {
+        alert('MAC-adresse skanning kommer i en senere versjon av applikasjonen.');
+      });
+    });
     </script>
   </body>
 </html>
