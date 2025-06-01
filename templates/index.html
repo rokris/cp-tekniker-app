@@ -251,19 +251,26 @@
       </div>
     </div>
 
+    <!-- Kamera Modal (legg inn rett før </body> eller der det passer i din layout) -->
+    <div id="cameraModal" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-70">
+      <div class="flex flex-col items-center bg-gray-900 bg-opacity-80 p-4 rounded-xl shadow-lg max-w-full w-[95vw] max-h-[90vh]">
+        <video id="cameraVideo" autoplay playsinline class="w-full max-w-md max-h-[50vh] rounded mb-2 bg-black"></video>
+        <canvas id="cameraCanvas" style="display:none" class="w-full max-w-md max-h-[50vh] mb-2"></canvas>
+        <div id="cameraStatus" class="text-white mt-2"></div>
+        <div class="flex gap-2 mt-4 w-full justify-center">
+          <button id="cameraOcrBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Ta bilde og kjør OCR</button>
+          <button id="cameraCancelBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Avbryt</button>
+        </div>
+      </div>
+    </div>
+    <!-- Kamera-knapp, plasser denne der du ønsker å trigge kamera -->
+    <button id="cameraBtn" type="button" class="bg-blue-500 text-white px-3 py-1 rounded">Kamera</button>
+
     <!--
       Laster hoved-JavaScript (ES6-modul) som binder sammen all frontend-funksjonalitet.
     -->
     <script type="module" src="/static/js/main.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const cameraBtn = document.getElementById('cameraScanBtn');
-      if (!cameraBtn) return;
-      
-      cameraBtn.addEventListener('click', () => {
-        alert('MAC-adresse skanning kommer i en senere versjon av applikasjonen.');
-      });
-    });
-    </script>
+    <!-- Legg til Tesseract.js for OCR-støtte -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
   </body>
 </html>

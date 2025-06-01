@@ -205,3 +205,115 @@ function afterLoginSuccess(data) {
         window.setSponsorNameFromBackend(data.email);
     }
 }
+
+// === Kamera og OCR-funksjon ===
+let cameraStream = null;
+
+async function openCameraModal() {
+    const cameraModal = document.getElementById('cameraModal');
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const ocrBtn = document.getElementById('cameraOcrBtn');
+    const cancelBtn = document.getElementById('cameraCancelBtn');
+    const status = document.getElementById('cameraStatus');
+    status.textContent = '';
+    canvas.style.display = 'none';
+    cameraModal.classList.remove('hidden');
+    ocrBtn.style.display = '';
+    cancelBtn.style.display = '';
+    // Prøv å bruke bakkamera først
+    let constraints = { video: { facingMode: { exact: 'environment' } } };
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (err) {
+        // Fallback til frontkamera hvis bakkamera ikke finnes
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        } catch (err2) {
+            // Fallback til hvilket som helst kamera
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            } catch (err3) {
+                status.textContent = 'Kunne ikke åpne kamera: ' + err3.message;
+                return;
+            }
+        }
+    }
+    video.srcObject = cameraStream;
+    video.play();
+    ocrBtn.onclick = async function() {
+        status.textContent = 'Kjører OCR...';
+        ocrBtn.style.display = 'none';
+        // Ta bilde fra video til canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'block';
+        if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+        try {
+            const { data: { text } } = await Tesseract.recognize(canvas, 'nor+eng');
+            const macRegex = /([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|([0-9A-Fa-f]{6}-[0-9A-Fa-f]{6})|([0-9A-Fa-f]{2}){6}/g;
+            const matches = text.match(macRegex);
+            if (matches && matches.length > 0) {
+                document.getElementById('macaddr').value = matches[0];
+                status.textContent = 'MAC-adresse funnet!';
+                setTimeout(() => closeCameraModal(), 1000);
+            } else {
+                status.textContent = 'Fant ingen MAC-adresse.';
+                // Etter 3 sekunder: restart video preview og vis knapper igjen
+                setTimeout(async () => {
+                    status.textContent = '';
+                    canvas.style.display = 'none';
+                    ocrBtn.style.display = '';
+                    // Start kamera på nytt
+                    let constraints = { video: { facingMode: { exact: 'environment' } } };
+                    try {
+                        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    } catch (err) {
+                        try {
+                            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                        } catch (err2) {
+                            try {
+                                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                            } catch (err3) {
+                                status.textContent = 'Kunne ikke åpne kamera: ' + err3.message;
+                                return;
+                            }
+                        }
+                    }
+                    video.srcObject = cameraStream;
+                    video.play();
+                }, 3000);
+            }
+        } catch (err) {
+            status.textContent = 'OCR-feil: ' + err.message;
+            ocrBtn.style.display = '';
+        }
+    };
+    cancelBtn.onclick = closeCameraModal;
+}
+
+function closeCameraModal() {
+    const cameraModal = document.getElementById('cameraModal');
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const status = document.getElementById('cameraStatus');
+    cameraModal.classList.add('hidden');
+    status.textContent = '';
+    canvas.style.display = 'none';
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+    }
+    video.srcObject = null;
+}
+
+// Legg til event listener på begge kameraknappene
+const cameraBtn = document.getElementById('cameraBtn');
+if (cameraBtn) {
+    cameraBtn.addEventListener('click', openCameraModal);
+}
+const cameraScanBtn = document.getElementById('cameraScanBtn');
+if (cameraScanBtn) {
+    cameraScanBtn.addEventListener('click', openCameraModal);
+}
