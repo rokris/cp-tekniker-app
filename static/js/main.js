@@ -317,3 +317,30 @@ const cameraScanBtn = document.getElementById('cameraScanBtn');
 if (cameraScanBtn) {
     cameraScanBtn.addEventListener('click', openCameraModal);
 }
+
+// Ny funksjon for å skjule createDeviceBtn hvis annet modalvindu er synlig
+function isAnyModalVisible() {
+    return [
+        document.getElementById('loginModal'),
+        document.getElementById('deviceInfoModal'),
+        document.getElementById('createDeviceModal'),
+        document.getElementById('cameraModal')
+    ].some(modal => modal && !modal.classList.contains('hidden'));
+}
+
+function updateCreateDeviceBtnVisibility() {
+    const btn = document.getElementById('createDeviceBtn');
+    if (!btn) return;
+    btn.style.display = isAnyModalVisible() ? 'none' : '';
+}
+
+// Kall denne funksjonen når modaler vises/skjules
+['loginModal','deviceInfoModal','createDeviceModal','cameraModal'].forEach(id => {
+    const modal = document.getElementById(id);
+    if (modal) {
+        const observer = new MutationObserver(updateCreateDeviceBtnVisibility);
+        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+});
+// Kall også ved oppstart
+updateCreateDeviceBtnVisibility();
