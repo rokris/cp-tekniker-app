@@ -146,11 +146,6 @@ export function showCameraModal() {
         fabId: "cameraFabClose",
         closeFn: closeCameraModal
     });
-    // Skjul de gamle knappene hvis de finnes
-    //const ocrBtn = document.getElementById('cameraOcrBtn');
-    //const cancelBtn = document.getElementById('cameraCancelBtn');
-    //if (ocrBtn) ocrBtn.style.display = 'none';
-    //if (cancelBtn) cancelBtn.style.display = 'none';
 }
 
 /**
@@ -161,11 +156,6 @@ export function closeCameraModal() {
         modalId: "cameraModal",
         fabId: "cameraFabClose"
     });
-    // Vis de gamle knappene igjen hvis de finnes
-    //const ocrBtn = document.getElementById('cameraOcrBtn');
-    //const cancelBtn = document.getElementById('cameraCancelBtn');
-    //if (ocrBtn) ocrBtn.style.display = '';
-    //if (cancelBtn) cancelBtn.style.display = '';
 }
 
 /**
