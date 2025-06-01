@@ -12,23 +12,7 @@ export function showDeviceInfoModal(data) {
     content.textContent = JSON.stringify(data, null, 2);
     modal.classList.remove("hidden");
     document.body.classList.add("overflow-hidden");
-
-    // Legg til FAB for lukk hvis ikke allerede lagt til
-    if (!document.getElementById("deviceInfoFabClose")) {
-        const fab = document.createElement("button");
-        fab.id = "deviceInfoFabClose";
-        fab.title = "Lukk";
-        fab.type = "button";
-        fab.setAttribute('aria-label', 'Lukk');
-        fab.className = "fixed bottom-8 right-8 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg p-4 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-white";
-        fab.style.zIndex = "2147483647"; // Ekstremt høy z-index for å alltid ligge øverst
-        fab.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
-        fab.onclick = function(e) {
-            e.stopPropagation();
-            closeDeviceInfoModal();
-        };
-        document.body.appendChild(fab);
-    }
+    addModalFabClose("deviceInfoFabClose", closeDeviceInfoModal);
 }
 
 /**
@@ -38,12 +22,7 @@ export function closeDeviceInfoModal() {
     const modal = document.getElementById("deviceInfoModal");
     modal.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
-
-    // Fjern FAB for lukk hvis den eksisterer
-    const fab = document.getElementById("deviceInfoFabClose");
-    if (fab) {
-        fab.remove();
-    }
+    removeModalFabClose("deviceInfoFabClose");
 }
 
 /**
@@ -56,22 +35,7 @@ export function showCreateDeviceModal(data) {
     content.textContent = JSON.stringify(data, null, 2);
     modal.classList.remove("hidden");
     document.body.classList.add("overflow-hidden");
-    // Legg til FAB for lukk hvis ikke allerede lagt til
-    if (!document.getElementById("createDeviceFabClose")) {
-        const fab = document.createElement("button");
-        fab.id = "createDeviceFabClose";
-        fab.title = "Lukk";
-        fab.type = "button";
-        fab.setAttribute('aria-label', 'Lukk');
-        fab.className = "fixed bottom-8 right-8 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg p-4 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-white";
-        fab.style.zIndex = "2147483647";
-        fab.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
-        fab.onclick = function(e) {
-            e.stopPropagation();
-            closeCreateDeviceModal();
-        };
-        document.body.appendChild(fab);
-    }
+    addModalFabClose("createDeviceFabClose", closeCreateDeviceModal);
 }
 
 /**
@@ -81,11 +45,7 @@ export function closeCreateDeviceModal() {
     const modal = document.getElementById("createDeviceModal");
     modal.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
-    // Fjern FAB for lukk hvis den eksisterer
-    const fab = document.getElementById("createDeviceFabClose");
-    if (fab) {
-        fab.remove();
-    }
+    removeModalFabClose("createDeviceFabClose");
 }
 
 /**
@@ -95,6 +55,7 @@ export function showCameraModal() {
     const modal = document.getElementById("cameraModal");
     modal.classList.remove("hidden");
     document.body.classList.add("overflow-hidden");
+    addModalFabClose("cameraFabClose", closeCameraModal);
 }
 
 /**
@@ -104,6 +65,7 @@ export function closeCameraModal() {
     const modal = document.getElementById("cameraModal");
     modal.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
+    removeModalFabClose("cameraFabClose");
 }
 
 /**
@@ -113,6 +75,7 @@ export function showLoginModal() {
     const modal = document.getElementById("loginModal");
     modal.classList.remove("hidden");
     document.body.classList.add("overflow-hidden");
+    addModalFabClose("loginFabClose", closeLoginModal);
 }
 
 /**
@@ -122,4 +85,33 @@ export function closeLoginModal() {
     const modal = document.getElementById("loginModal");
     modal.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
+    removeModalFabClose("loginFabClose");
+}
+
+/**
+ * Lager en gjenbrukbar FAB-lukkeknapp for modaler.
+ * @param {string} fabId - Unik id for FAB.
+ * @param {function} closeFn - Funksjon som skal kalles ved klikk.
+ */
+function addModalFabClose(fabId, closeFn) {
+    if (!document.getElementById(fabId)) {
+        const fab = document.createElement("button");
+        fab.id = fabId;
+        fab.title = "Lukk";
+        fab.type = "button";
+        fab.setAttribute('aria-label', 'Lukk');
+        fab.className = "fixed bottom-8 right-8 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg p-4 flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-white";
+        fab.style.zIndex = "2147483647";
+        fab.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+        fab.onclick = function(e) {
+            e.stopPropagation();
+            closeFn();
+        };
+        document.body.appendChild(fab);
+    }
+}
+
+function removeModalFabClose(fabId) {
+    const fab = document.getElementById(fabId);
+    if (fab) fab.remove();
 }
