@@ -126,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function () {
     lucide.createIcons();
     enableLoginEnter();
     enableAuthCodeEnter();
-    document.getElementById('closeCreateDeviceBtn').addEventListener('click', closeCreateDeviceModal);
     document.getElementById('requestAuthBtn').addEventListener('click', () => requestAuthCode(disableButtons));
     document.getElementById('loginBtn').addEventListener('click', () => verifyAuthCode((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), disableButtons));
     document.getElementById('logoutBtn').addEventListener('click', () => logout((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), showToast));
