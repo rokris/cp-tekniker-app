@@ -4,6 +4,7 @@
 import { showCameraModal as _showCameraModal, closeCameraModal as _closeCameraModal } from './modal.js';
 
 let cameraStream = null;
+// Variabler for ROI-dragging
 let roiBox = null;
 let isDragging = false;
 let startPointer = { x: 0, y: 0 };
@@ -28,9 +29,7 @@ export async function getAnyCameraStream() {
     for (const constraints of options) {
         try {
             return await navigator.mediaDevices.getUserMedia(constraints);
-        } catch (_) {
-            // Prøv neste
-        }
+        } catch (_) {}
     }
     throw new Error('Kunne ikke finne noe kamera tilgjengelig');
 }
@@ -74,17 +73,15 @@ function createOrUpdateRoiBox(container) {
             zIndex: '10',
             pointerEvents: 'auto'
         });
-        container.style.position = 'relative'; // sørg for parent er relativ
+        container.style.position = 'relative';
         container.appendChild(roiBox);
-        
         // Initial sentrering av boksen
         const contRect = container.getBoundingClientRect();
         const initLeft = (contRect.width - boxWidth) / 2;
         const initTop = (contRect.height - boxHeight) / 2;
         roiBox.style.left = initLeft + 'px';
         roiBox.style.top = initTop + 'px';
-
-        // Håndter dragging via mus
+        // Dragging via mus og touch
         roiBox.addEventListener('mousedown', (e) => {
             isDragging = true;
             startPointer.x = e.clientX;
@@ -109,8 +106,6 @@ function createOrUpdateRoiBox(container) {
         document.addEventListener('mouseup', () => {
             isDragging = false;
         });
-
-        // Håndter dragging via touch
         roiBox.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
             isDragging = true;
@@ -164,7 +159,6 @@ export async function captureAndRunOcr(video, canvas, statusElement) {
 
     // Stopp kamera-strøm
     stopCamera();
-
     try {
         const result = await Tesseract.recognize(canvas, 'nor+eng', {
             tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
@@ -183,18 +177,11 @@ export async function openCameraModal() {
     const video = document.getElementById('cameraVideo');
     const canvas = document.getElementById('cameraCanvas');
     const ocrBtn = document.getElementById('cameraOcrBtn');
-    const cancelBtn = document.getElementById('cameraCancelBtn');
     const status = document.getElementById('cameraStatus');
-    const container = video.parentElement;
-
     status.textContent = '';
     canvas.style.display = 'none';
     ocrBtn.style.display = '';
-    cancelBtn.style.display = '';
-
-    // Opprett/oppdater ROI-boks midtstilt
-    createOrUpdateRoiBox(container);
-
+    createOrUpdateRoiBox(video.parentElement);
     try {
         cameraStream = await getAnyCameraStream();
         video.srcObject = cameraStream;
@@ -203,7 +190,6 @@ export async function openCameraModal() {
         status.textContent = 'Kunne ikke åpne kamera: ' + err.message;
         return;
     }
-
     // Håndter lukking via ESC eller overlay-click
     const cameraModal = document.getElementById('cameraModal');
     function escListener(e) {
@@ -214,9 +200,25 @@ export async function openCameraModal() {
     }
     document.addEventListener('keydown', escListener);
     cameraModal.addEventListener('click', overlayListener);
-
     ocrBtn.onclick = async () => {
+        await handleOcrClick();
+    };
+    // FAB OCR-knapp
+    const fabOcrBtn = document.getElementById('cameraFabOcr');
+    if (fabOcrBtn) {
+        fabOcrBtn.onclick = async () => {
+            await handleOcrClick();
+        };
+    }
+    // FAB Lukk-knapp
+    const fabCloseBtn = document.getElementById('cameraFabClose');
+    if (fabCloseBtn) {
+        fabCloseBtn.onclick = () => closeCameraModal();
+    }
+
+    async function handleOcrClick() {
         ocrBtn.style.display = 'none';
+        if (fabOcrBtn) fabOcrBtn.disabled = true;
         try {
             const text = await captureAndRunOcr(video, canvas, status);
             const macRegex = /(?:(?:[0-9A-Fa-f]{2}([:-]))(?:[0-9A-Fa-f]{2}\1){4}[0-9A-Fa-f]{2}|(?:[0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6})/g;
@@ -234,12 +236,8 @@ export async function openCameraModal() {
         } catch (err) {
             status.textContent = err.message;
             ocrBtn.style.display = '';
+        } finally {
+            if (fabOcrBtn) fabOcrBtn.disabled = false;
         }
-    };
-
-    cancelBtn.onclick = () => {
-        document.removeEventListener('keydown', escListener);
-        cameraModal.removeEventListener('click', overlayListener);
-        closeCameraModal();
-    };
+    }
 }
