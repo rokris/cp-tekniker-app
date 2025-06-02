@@ -46,10 +46,9 @@ export function stopCamera() {
     if (video) video.srcObject = null;
 }
 
-export async function restartPreview(video, canvas, status, ocrBtn) {
+export async function restartPreview(video, canvas, status) {
     status.textContent = '';
     canvas.style.display = 'none';
-    ocrBtn.style.display = '';
     try {
         cameraStream = await getAnyCameraStream();
         video.srcObject = cameraStream;
@@ -177,17 +176,26 @@ export async function captureAndRunOcr(video, canvas, statusElement) {
 // Åpner camera-modal, setter opp stream, ROI og knapper
 export async function openCameraModal() {
     _showCameraModal();
+
     // Vis FAB-bar eksplisitt hver gang modal åpnes
     const fabBar = document.getElementById('cameraFabBar');
-    if (fabBar) fabBar.style.display = 'flex';
+    if (fabBar) {
+        // Fjern eventuell Tailwind-klasse som gir right-8:
+        fabBar.classList.remove('right-8');
+        // Sett posisjon slik at knappen ligger bottom:2rem (right:5rem)
+        fabBar.style.bottom   = '2rem';  // tilsvarer Tailwind bottom-8
+        fabBar.style.right    = '6rem';  // tilsvarer Tailwind right-20
+        fabBar.style.display  = 'flex';
+    }
+
     const video = document.getElementById('cameraVideo');
     const canvas = document.getElementById('cameraCanvas');
-    const ocrBtn = document.getElementById('cameraOcrBtn');
     const status = document.getElementById('cameraStatus');
     status.textContent = '';
     canvas.style.display = 'none';
-    ocrBtn.style.display = '';
+
     createOrUpdateRoiBox(video.parentElement);
+
     try {
         cameraStream = await getAnyCameraStream();
         video.srcObject = cameraStream;
@@ -196,6 +204,7 @@ export async function openCameraModal() {
         status.textContent = 'Kunne ikke åpne kamera: ' + err.message;
         return;
     }
+
     // Håndter lukking via ESC eller overlay-click
     const cameraModal = document.getElementById('cameraModal');
     function escListener(e) {
@@ -206,28 +215,26 @@ export async function openCameraModal() {
     }
     document.addEventListener('keydown', escListener);
     cameraModal.addEventListener('click', overlayListener);
-    ocrBtn.onclick = async () => {
-        await handleOcrClick();
-    };
-    // FAB OCR-knapp
+
+    // Koble FAB‐OCR‐knapp
     const fabOcrBtn = document.getElementById('cameraFabOcr');
     if (fabOcrBtn) {
         fabOcrBtn.onclick = async () => {
             await handleOcrClick();
         };
     }
-    // FAB Lukk-knapp
+
+    // Koble FAB‐Lukk‐knapp
     const fabCloseBtn = document.getElementById('cameraFabClose');
     if (fabCloseBtn) {
         fabCloseBtn.onclick = () => closeCameraModal();
     }
 
     async function handleOcrClick() {
-        ocrBtn.style.display = 'none';
         if (fabOcrBtn) fabOcrBtn.disabled = true;
         try {
             const text = await captureAndRunOcr(video, canvas, status);
-            const macRegex = /(?:(?:[0-9-A-Fa-f]{2}([:-]))(?:[0-9-A-Fa-f]{2}\1){4}[0-9-A-Fa-f]{2}|(?:[0-9-A-Fa-f]{4}\.){2}[0-9-A-Fa-f]{4}|[0-9-A-Fa-f]{6}-[0-9-A-Fa-f]{6})/g;
+            const macRegex = /(?:(?:[0-9-A-Fa-f]{2}([:-]))(?:[0-9-A-Fa-f]{2}\1){4}[0-9-A-Fa-f]{2}|(?:[0-9A-Fa-f]{4}\.){2}[0-9-A-Fa-f]{4}|[0-9-A-Fa-f]{6}-[0-9-A-Fa-f]{6})/g;
             const matches = text.match(macRegex);
             if (matches && matches.length > 0) {
                 document.getElementById('macaddr').value = matches[0];
@@ -237,11 +244,10 @@ export async function openCameraModal() {
                 setTimeout(closeCameraModal, 1000);
             } else {
                 status.textContent = 'Fant ingen MAC-adresse.';
-                setTimeout(() => restartPreview(video, canvas, status, ocrBtn), 3000);
+                setTimeout(() => restartPreview(video, canvas, status), 3000);
             }
         } catch (err) {
             status.textContent = err.message;
-            ocrBtn.style.display = '';
         } finally {
             if (fabOcrBtn) fabOcrBtn.disabled = false;
         }
