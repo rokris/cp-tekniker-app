@@ -18,6 +18,16 @@ Denne veiledningen beskriver steg for steg hvordan du som sluttbruker navigerer 
 
 ## 2. Oversikt og navigasjon
 
+### Ikoner og knapper
+
+- ![Plus-knapp](sandbox:/mnt/data/plus_button.png) **+**: Brukes for å opprette ny enhet.
+- ![Kamera-knapp](sandbox:/mnt/data/camera_button.png) **Kamera**: Brukes for OCR-skanning for å lese av MAC-adresse.
+- ![Blyant-ikon](sandbox:/mnt/data/edit_button.png) **Rediger**: Brukes for å gå til redigeringsmodus i enhetsdialog.
+- ![Lagre-knapp](sandbox:/mnt/data/save_button.png) **Lagre**: Brukes for å lagre endringer i redigeringsmodus.
+- ![Avbryt-knapp](sandbox:/mnt/data/cancel_button.png) **Avbryt**: Brukes for å avbryte endringer i redigeringsmodus.
+
+
+
 Når du er logget inn, ser du følgende elementer:
 
 - **Toppfelt** med app-ikon og navn til venstre, og en utloggingsknapp til høyre.  
@@ -199,6 +209,23 @@ Når du er logget inn, ser du følgende elementer:
 - **God belysning for OCR**: Hvis du bruker kamera til å skanne MAC, sørg for godt lys og strekkodensikt uten skygger.
 
 ---
+
+
+
+## 12. Tastatursnarveier
+
+- **Enter**: ![Enter](sandbox:/mnt/data/enter_key.png)
+  - På hovedskjermen, etter å ha skrevet inn MAC-adresse, kan du trykke **Enter** for å utføre «Hent enhet» uten å klikke på knappen.
+  - I opprett- eller redigeringsdialoger, når du står i et tekstfelt, vil **Enter** vanligvis aktivere standardhandlingen:
+    - Hvis fokus er på et input-felt i en redigeringsdialog, tilsvarer **Enter** som regel «Lagre»-knappen, slik at du kan sende inn endringer raskt.
+    - I opprettingsdialogen, når alle obligatoriske felter er utfylt, vil **Enter** aktivere «Opprett enhet».
+- **Esc**: ![Esc](sandbox:/mnt/data/esc_key.png)
+  - I alle modaler (hente, opprette, redigere, og kamera-dialog), kan du trykke **Esc** for å lukke modalen:
+    - Hvis du er i redigeringsmodus for enhet og har gjort endringer, fungerer **Esc** på samme måte som «Avbryt»: endringer kastes og du går tilbake til visningsmodus.
+    - I kameramodalen vil **Esc** lukke kamera uten å skanne.
+    - I en enkel visningsmodal (uten aktiv redigering) vil **Esc** bare lukke modalen.
+
+Disse snarveiene gjør det raskere å navigere i appen uten å bruke musen hele tiden.
 
 ## 11. Sammendrag
 
