@@ -6,7 +6,17 @@ import { showCameraModal as _showCameraModal, closeCameraModal as _closeCameraMo
 let cameraStream = null;
 let roiBox = null;
 let isDragging = false;
-let dragOffset = { x: 0, y: 0 };
+let startPointer = { x: 0, y: 0 };
+let boxStart = { x: 0, y: 0 };
+
+// Wrapper for closing modal + stoppe kamera
+function closeCameraModal() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+    }
+    _closeCameraModal();
+}
 
 // Henter først bakkamera, deretter frontkamera, deretter hvilket som helst.
 export async function getAnyCameraStream() {
@@ -25,9 +35,9 @@ export async function getAnyCameraStream() {
     throw new Error('Kunne ikke finne noe kamera tilgjengelig');
 }
 
-export function stopCameraStream() {
+export function stopCamera() {
     if (cameraStream) {
-        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
     }
     const video = document.getElementById('cameraVideo');
@@ -77,16 +87,19 @@ function createOrUpdateRoiBox(container) {
         // Håndter dragging via mus
         roiBox.addEventListener('mousedown', (e) => {
             isDragging = true;
-            dragOffset.x = e.clientX - roiBox.offsetLeft;
-            dragOffset.y = e.clientY - roiBox.offsetTop;
+            startPointer.x = e.clientX;
+            startPointer.y = e.clientY;
+            boxStart.x = parseInt(roiBox.style.left, 10);
+            boxStart.y = parseInt(roiBox.style.top, 10);
             e.preventDefault();
         });
         document.addEventListener('mousemove', (e) => {
             if (isDragging) {
+                const dx = e.clientX - startPointer.x;
+                const dy = e.clientY - startPointer.y;
                 const contRectLive = container.getBoundingClientRect();
-                let newLeft = e.clientX - contRectLive.left - dragOffset.x;
-                let newTop = e.clientY - contRectLive.top - dragOffset.y;
-                // Hold boksen innenfor containerens grenser
+                let newLeft = boxStart.x + dx;
+                let newTop = boxStart.y + dy;
                 newLeft = Math.max(0, Math.min(newLeft, contRectLive.width - roiBox.clientWidth));
                 newTop = Math.max(0, Math.min(newTop, contRectLive.height - roiBox.clientHeight));
                 roiBox.style.left = newLeft + 'px';
@@ -99,18 +112,22 @@ function createOrUpdateRoiBox(container) {
 
         // Håndter dragging via touch
         roiBox.addEventListener('touchstart', (e) => {
-            isDragging = true;
             const touch = e.touches[0];
-            dragOffset.x = touch.clientX - roiBox.offsetLeft;
-            dragOffset.y = touch.clientY - roiBox.offsetTop;
+            isDragging = true;
+            startPointer.x = touch.clientX;
+            startPointer.y = touch.clientY;
+            boxStart.x = parseInt(roiBox.style.left, 10);
+            boxStart.y = parseInt(roiBox.style.top, 10);
             e.preventDefault();
-        });
+        }, { passive: false });
         document.addEventListener('touchmove', (e) => {
             if (isDragging) {
                 const touch = e.touches[0];
+                const dx = touch.clientX - startPointer.x;
+                const dy = touch.clientY - startPointer.y;
                 const contRectLive = container.getBoundingClientRect();
-                let newLeft = touch.clientX - contRectLive.left - dragOffset.x;
-                let newTop = touch.clientY - contRectLive.top - dragOffset.y;
+                let newLeft = boxStart.x + dx;
+                let newTop = boxStart.y + dy;
                 newLeft = Math.max(0, Math.min(newLeft, contRectLive.width - roiBox.clientWidth));
                 newTop = Math.max(0, Math.min(newTop, contRectLive.height - roiBox.clientHeight));
                 roiBox.style.left = newLeft + 'px';
@@ -146,10 +163,7 @@ export async function captureAndRunOcr(video, canvas, statusElement) {
     canvas.style.display = 'block';
 
     // Stopp kamera-strøm
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
+    stopCamera();
 
     try {
         const result = await Tesseract.recognize(canvas, 'nor+eng', {
@@ -190,6 +204,17 @@ export async function openCameraModal() {
         return;
     }
 
+    // Håndter lukking via ESC eller overlay-click
+    const cameraModal = document.getElementById('cameraModal');
+    function escListener(e) {
+        if (e.key === 'Escape') closeCameraModal();
+    }
+    function overlayListener(e) {
+        if (e.target === cameraModal) closeCameraModal();
+    }
+    document.addEventListener('keydown', escListener);
+    cameraModal.addEventListener('click', overlayListener);
+
     ocrBtn.onclick = async () => {
         ocrBtn.style.display = 'none';
         try {
@@ -199,7 +224,9 @@ export async function openCameraModal() {
             if (matches && matches.length > 0) {
                 document.getElementById('macaddr').value = matches[0];
                 status.textContent = 'MAC-adresse funnet!';
-                setTimeout(_closeCameraModal, 1000);
+                document.removeEventListener('keydown', escListener);
+                cameraModal.removeEventListener('click', overlayListener);
+                setTimeout(closeCameraModal, 1000);
             } else {
                 status.textContent = 'Fant ingen MAC-adresse.';
                 setTimeout(() => restartPreview(video, canvas, status, ocrBtn), 3000);
@@ -210,5 +237,9 @@ export async function openCameraModal() {
         }
     };
 
-    cancelBtn.onclick = _closeCameraModal;
+    cancelBtn.onclick = () => {
+        document.removeEventListener('keydown', escListener);
+        cameraModal.removeEventListener('click', overlayListener);
+        closeCameraModal();
+    };
 }
