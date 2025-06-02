@@ -148,8 +148,8 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
     const role_id = document.getElementById("roleDropdown").value;
     const enabled = document.getElementById("enabledCheckbox").checked;
     const visitor_name = document.getElementById("visitorName").value.trim();
-    if (!visitor_name) {
-        showToast("Feltet 'Navn på enhet' må fylles ut.", "error");
+    if (!visitor_name || !mac) {
+        showToast("Feltet 'Enhetsnavn' og 'MAC-adresse må fylles ut.", "error");
         return;
     }
     const expireInput = document.getElementById("expireTime").value;
