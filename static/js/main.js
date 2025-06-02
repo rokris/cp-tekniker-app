@@ -5,8 +5,9 @@
 
 import { showToast, requestAuthCode, verifyAuthCode, logout } from './auth.js';
 import { fetchDeviceRoles, getDeviceInfo, createDevice, infoFetched, lastFetchedDeviceInfo, setInfoFetched, updateDevice, setDeviceFieldsReadonly } from './device.js';
-import { showDeviceInfoModal as _showDeviceInfoModal, closeDeviceInfoModal as _closeDeviceInfoModal, showCreateDeviceModal as _showCreateDeviceModal, closeCreateDeviceModal as _closeCreateDeviceModal, showCameraModal as _showCameraModal, closeCameraModal as _closeCameraModal } from './modal.js';
+import { showDeviceInfoModal as _showDeviceInfoModal, closeDeviceInfoModal as _closeDeviceInfoModal, showCreateDeviceModal as _showCreateDeviceModal, closeCreateDeviceModal as _closeCreateDeviceModal } from './modal.js';
 import { disableButtons, resetFieldsToDefault, setLoggedIn, showEditButtons, setDefaultActionButtons } from './ui.js';
+import { openCameraModal } from './camera.js';
 
 window.saveEdits = async function () {
     // Kall updateDevice (PATCH) i stedet for å gjøre POST her
@@ -173,6 +174,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     // Sørg for at FAB alltid finnes etter login/refresh
     setDefaultActionButtons(() => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons), () => createDevice(showToast, showCreateDeviceModal, disableButtons));
+
+    // Koble knapper i DOM
+    const cameraBtn = document.getElementById('cameraBtn');
+    if (cameraBtn) cameraBtn.addEventListener('click', openCameraModal);
+    const cameraScanBtn = document.getElementById('cameraScanBtn');
+    if (cameraScanBtn) cameraScanBtn.addEventListener('click', openCameraModal);
 });
 
 // Etter login eller refresh, hent e-post fra backend og sett sponsorName-feltet og window.loggedInEmail
@@ -217,146 +224,6 @@ function afterLoginSuccess(data) {
     }
 }
 
-// === Kamera og OCR-funksjon ===
-
-let cameraStream = null;
-
-// Henter først bakkamera, deretter frontkamera, deretter hvilket som helst.
-async function getAnyCameraStream() {
-    const options = [
-        { video: { facingMode: { exact: 'environment' } } },
-        { video: { facingMode: 'user' } },
-        { video: true }
-    ];
-
-    for (const constraints of options) {
-        try {
-            return await navigator.mediaDevices.getUserMedia(constraints);
-        } catch (_) {
-            // Prøv neste
-        }
-    }
-    throw new Error('Kunne ikke finne noe kamera tilgjengelig');
-}
-
-// Lukker modal og stopper kamera
-function closeCameraModal() {
-    const cameraModal = document.getElementById('cameraModal');
-    const video = document.getElementById('cameraVideo');
-    const canvas = document.getElementById('cameraCanvas');
-    const status = document.getElementById('cameraStatus');
-
-    cameraModal.classList.add('hidden');
-    status.textContent = '';
-    canvas.style.display = 'none';
-
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(t => t.stop());
-        cameraStream = null;
-    }
-    video.srcObject = null;
-}
-
-// Restarter forhåndsvisning etter at ingen MAC ble funnet
-async function restartPreview(video, canvas, status, ocrBtn) {
-    status.textContent = '';
-    canvas.style.display = 'none';
-    ocrBtn.style.display = '';
-
-    try {
-        cameraStream = await getAnyCameraStream();
-        video.srcObject = cameraStream;
-        video.play();
-    } catch (err) {
-        status.textContent = 'Kunne ikke åpne kamera: ' + err.message;
-    }
-}
-
-// Gjør kraftig OCR-prosess: fanger bilde, stopper kamera, kjører Tesseract
-async function captureAndRunOcr(video, canvas, statusElement) {
-    statusElement.textContent = 'Kjører OCR…';
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.style.display = 'block';
-
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-    }
-
-    try {
-        const result = await Tesseract.recognize(canvas, 'nor+eng');
-        return result.data.text;
-    } catch (err) {
-        throw new Error('OCR-feil: ' + err.message);
-    }
-}
-
-// Åpner modalen, setter opp video, knapper og OCR-logikk
-async function openCameraModal() {
-    const cameraModal = document.getElementById('cameraModal');
-    const video = document.getElementById('cameraVideo');
-    const canvas = document.getElementById('cameraCanvas');
-    const ocrBtn = document.getElementById('cameraOcrBtn');
-    const cancelBtn = document.getElementById('cameraCancelBtn');
-    const status = document.getElementById('cameraStatus');
-
-    // Bruk enhetlig modal-håndtering
-    _showCameraModal();
-
-    status.textContent = '';
-    canvas.style.display = 'none';
-    ocrBtn.style.display = '';
-    cancelBtn.style.display = '';
-
-    // Hent kamera
-    try {
-        cameraStream = await getAnyCameraStream();
-        video.srcObject = cameraStream;
-        video.play();
-    } catch (err) {
-        status.textContent = 'Kunne ikke åpne kamera: ' + err.message;
-        return;
-    }
-
-    // OCR-knapp
-    ocrBtn.onclick = async () => {
-        ocrBtn.style.display = 'none';
-        try {
-            const text = await captureAndRunOcr(video, canvas, status);
-            const macRegex = /(?:(?:[0-9A-Fa-f]{2}([:-]))(?:[0-9A-Fa-f]{2}\1){4}[0-9A-Fa-f]{2}|(?:[0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6})/g;
-            const matches = text.match(macRegex);
-
-            if (matches && matches.length > 0) {
-                document.getElementById('macaddr').value = matches[0];
-                status.textContent = 'MAC-adresse funnet!';
-                setTimeout(_closeCameraModal, 1000);
-            } else {
-                status.textContent = 'Fant ingen MAC-adresse.';
-                setTimeout(() => restartPreview(video, canvas, status, ocrBtn), 3000);
-            }
-        } catch (err) {
-            status.textContent = err.message;
-            ocrBtn.style.display = '';
-        }
-    };
-
-    cancelBtn.onclick = _closeCameraModal;
-}
-
-// Koble knapper i DOM
-const cameraBtn = document.getElementById('cameraBtn');
-if (cameraBtn) {
-    cameraBtn.addEventListener('click', openCameraModal);
-}
-const cameraScanBtn = document.getElementById('cameraScanBtn');
-if (cameraScanBtn) {
-    cameraScanBtn.addEventListener('click', openCameraModal);
-}
-
-// Ny funksjon for å skjule createDeviceBtn hvis annet modalvindu er synlig
 function isAnyModalVisible() {
     return [
         document.getElementById('loginModal'),
@@ -369,6 +236,7 @@ function isAnyModalVisible() {
 function updateCreateDeviceBtnVisibility() {
     const btn = document.getElementById('createDeviceBtn');
     if (!btn) return;
+    // Skjul createDeviceBtn hvis noen modal er synlig
     btn.style.display = isAnyModalVisible() ? 'none' : '';
 }
 
