@@ -172,6 +172,7 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
             showToast("Enhet opprettet.");
             document.getElementById("sponsorName").value = sponsor_name;
             infoFetched = true;
+            lastFetchedDeviceInfo = data;
         } else {
             showToast(data.error || "Feil", "error");
         }
@@ -216,6 +217,8 @@ export async function updateDevice(showToast, disableButtons) {
         const data = await response.json();
         if (response.ok) {
             showToast("Endringer lagret.");
+            lastFetchedDeviceInfo = data;
+            infoFetched = true;
             return data;
         } else {
             showToast(data.error || "Feil", "error");
