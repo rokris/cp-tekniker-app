@@ -1,6 +1,7 @@
 // ui.js
 // Hjelpemodul for brukergrensesnitt-funksjoner i CP-Tekniker Device Management App.
 // Inneholder funksjoner for å vise/skjule knapper, tilbakestille felter, og håndtere visning av redigerings- og standardknapper.
+import { addModalFabClose, removeModalFabClose } from './modal.js';
 
 /**
  * Deaktiverer eller aktiverer knapper basert på id-liste.
@@ -52,6 +53,9 @@ export function showEditButtons(saveEdits, cancelEdits) {
     const oldCancelFab = document.getElementById("cancelFabBtn");
     if (oldSaveFab) oldSaveFab.remove();
     if (oldCancelFab) oldCancelFab.remove();
+    // Vis createDeviceBtn ikke i edit-modus
+    const createDeviceBtn = document.getElementById("createDeviceBtn");
+    if (createDeviceBtn) createDeviceBtn.style.display = "none";
     // Lagre FAB
     const saveFab = document.createElement("button");
     saveFab.id = "saveFabBtn";
@@ -61,13 +65,13 @@ export function showEditButtons(saveEdits, cancelEdits) {
     saveFab.innerHTML = '<i data-lucide="save" class="w-8 h-8"></i>';
     saveFab.addEventListener("click", saveEdits);
     document.body.appendChild(saveFab);
-    // Avbryt FAB
+    // Angre/Avbryt FAB (ikke felles lukkeknapp)
     const cancelFab = document.createElement("button");
     cancelFab.id = "cancelFabBtn";
     cancelFab.className = "fixed bottom-8 right-8 z-50 bg-gray-200 hover:bg-gray-300 text-black rounded-full shadow-lg w-16 h-16 flex items-center justify-center text-3xl border border-gray-400 focus:outline-none";
-    cancelFab.title = "Avbryt";
+    cancelFab.title = "Angre endringer";
     cancelFab.style.boxShadow = "0 4px 16px rgba(80,80,80,0.12)";
-    cancelFab.innerHTML = '<i data-lucide="x-circle" class="w-8 h-8"></i>';
+    cancelFab.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
     cancelFab.addEventListener("click", cancelEdits);
     document.body.appendChild(cancelFab);
     lucide.createIcons();
@@ -83,9 +87,8 @@ export function showEditButtons(saveEdits, cancelEdits) {
 export function setDefaultActionButtons(getDeviceInfo, createDevice) {
     // Fjern eventuelle edit-FABs
     const oldSaveFab = document.getElementById("saveFabBtn");
-    const oldCancelFab = document.getElementById("cancelFabBtn");
     if (oldSaveFab) oldSaveFab.remove();
-    if (oldCancelFab) oldCancelFab.remove();
+    removeModalFabClose("cancelFabBtn");
     const actionDiv = document.getElementById("actionButtons");
     // Fjern "ukjent rolle" fra dropdown før standard handling
     const dropdown = document.getElementById("roleDropdown");

@@ -192,7 +192,7 @@ export async function updateDevice(showToast, disableButtons) {
     const selectedOpt = dropdown.options[dropdown.selectedIndex];
     const visitor_name = document.getElementById("visitorName").value.trim();
     if (!visitor_name) {
-        showToast("Feltet 'Navn på enhet' må fylles ut.", "error");
+        showToast("Feltet 'Enhetsnavn' må fylles ut.", "error");
         disableButtons(["saveFabBtn", "cancelFabBtn"], false);
         return null;
     }

@@ -219,3 +219,6 @@ function removeModalFabClose(fabId) {
     const fab = document.getElementById(fabId);
     if (fab) fab.remove();
 }
+
+// Eksporter FAB-funksjoner for bruk i ui.js
+export { addModalFabClose, removeModalFabClose };

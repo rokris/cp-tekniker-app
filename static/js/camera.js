@@ -16,6 +16,9 @@ function closeCameraModal() {
         cameraStream.getTracks().forEach(t => t.stop());
         cameraStream = null;
     }
+    // Skjul FAB-bar og nullstill eventuelle tilstander
+    const fabBar = document.getElementById('cameraFabBar');
+    if (fabBar) fabBar.style.display = 'none';
     _closeCameraModal();
 }
 
@@ -174,6 +177,9 @@ export async function captureAndRunOcr(video, canvas, statusElement) {
 // Åpner camera-modal, setter opp stream, ROI og knapper
 export async function openCameraModal() {
     _showCameraModal();
+    // Vis FAB-bar eksplisitt hver gang modal åpnes
+    const fabBar = document.getElementById('cameraFabBar');
+    if (fabBar) fabBar.style.display = 'flex';
     const video = document.getElementById('cameraVideo');
     const canvas = document.getElementById('cameraCanvas');
     const ocrBtn = document.getElementById('cameraOcrBtn');
@@ -221,7 +227,7 @@ export async function openCameraModal() {
         if (fabOcrBtn) fabOcrBtn.disabled = true;
         try {
             const text = await captureAndRunOcr(video, canvas, status);
-            const macRegex = /(?:(?:[0-9A-Fa-f]{2}([:-]))(?:[0-9A-Fa-f]{2}\1){4}[0-9A-Fa-f]{2}|(?:[0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6})/g;
+            const macRegex = /(?:(?:[0-9-A-Fa-f]{2}([:-]))(?:[0-9-A-Fa-f]{2}\1){4}[0-9-A-Fa-f]{2}|(?:[0-9-A-Fa-f]{4}\.){2}[0-9-A-Fa-f]{4}|[0-9-A-Fa-f]{6}-[0-9-A-Fa-f]{6})/g;
             const matches = text.match(macRegex);
             if (matches && matches.length > 0) {
                 document.getElementById('macaddr').value = matches[0];

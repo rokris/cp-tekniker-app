@@ -128,12 +128,12 @@
           <button id="cameraOcrBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Ta bilde og kjør OCR</button>
         </div>
         <!-- FAB-område -->
-        <div class="fixed bottom-8 right-8 flex flex-col items-end gap-4 z-50">
-          <button id="cameraFabOcr" title="Ta bilde og kjør OCR" class="flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 shadow-lg hover:bg-blue-700 focus:outline-none">
-            <i data-lucide="scan-face" class="w-7 h-7 text-white"></i>
-          </button>
-          <button id="cameraFabClose" title="Lukk kamera" class="flex items-center justify-center w-14 h-14 rounded-full bg-gray-700 shadow-lg hover:bg-gray-800 focus:outline-none">
-            <i data-lucide="x" class="w-7 h-7 text-white"></i>
+        <div id="cameraFabBar" class="fixed bottom-8 right-8 flex flex-row items-center gap-4 z-50">
+          <button id="cameraFabOcr" title="Ta bilde og kjør OCR" type="button"
+            class="flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7V6a2 2 0 012-2h2.586a1 1 0 01.707.293l1.414 1.414A1 1 0 0011.414 6H19a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm7 4a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
           </button>
         </div>
       </div>
