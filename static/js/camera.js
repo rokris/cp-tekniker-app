@@ -4,6 +4,9 @@
 import { showCameraModal as _showCameraModal, closeCameraModal as _closeCameraModal } from './modal.js';
 
 let cameraStream = null;
+let roiBox = null;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
 
 // Henter først bakkamera, deretter frontkamera, deretter hvilket som helst.
 export async function getAnyCameraStream() {
@@ -44,24 +47,123 @@ export async function restartPreview(video, canvas, status, ocrBtn) {
     }
 }
 
+// Opprett eller oppdater flyttbar ROI-boks innenfor videokontainer
+function createOrUpdateRoiBox(container) {
+    if (!roiBox) {
+        roiBox = document.createElement('div');
+        roiBox.id = 'roiBox';
+        const boxWidth = 200;
+        const boxHeight = 50;
+        Object.assign(roiBox.style, {
+            position: 'absolute',
+            border: '2px dashed red',
+            width: boxWidth + 'px',
+            height: boxHeight + 'px',
+            cursor: 'move',
+            boxSizing: 'border-box',
+            zIndex: '10',
+            pointerEvents: 'auto'
+        });
+        container.style.position = 'relative'; // sørg for parent er relativ
+        container.appendChild(roiBox);
+        
+        // Initial sentrering av boksen
+        const contRect = container.getBoundingClientRect();
+        const initLeft = (contRect.width - boxWidth) / 2;
+        const initTop = (contRect.height - boxHeight) / 2;
+        roiBox.style.left = initLeft + 'px';
+        roiBox.style.top = initTop + 'px';
+
+        // Håndter dragging via mus
+        roiBox.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragOffset.x = e.clientX - roiBox.offsetLeft;
+            dragOffset.y = e.clientY - roiBox.offsetTop;
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const contRectLive = container.getBoundingClientRect();
+                let newLeft = e.clientX - contRectLive.left - dragOffset.x;
+                let newTop = e.clientY - contRectLive.top - dragOffset.y;
+                // Hold boksen innenfor containerens grenser
+                newLeft = Math.max(0, Math.min(newLeft, contRectLive.width - roiBox.clientWidth));
+                newTop = Math.max(0, Math.min(newTop, contRectLive.height - roiBox.clientHeight));
+                roiBox.style.left = newLeft + 'px';
+                roiBox.style.top = newTop + 'px';
+            }
+        });
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Håndter dragging via touch
+        roiBox.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            const touch = e.touches[0];
+            dragOffset.x = touch.clientX - roiBox.offsetLeft;
+            dragOffset.y = touch.clientY - roiBox.offsetTop;
+            e.preventDefault();
+        });
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const touch = e.touches[0];
+                const contRectLive = container.getBoundingClientRect();
+                let newLeft = touch.clientX - contRectLive.left - dragOffset.x;
+                let newTop = touch.clientY - contRectLive.top - dragOffset.y;
+                newLeft = Math.max(0, Math.min(newLeft, contRectLive.width - roiBox.clientWidth));
+                newTop = Math.max(0, Math.min(newTop, contRectLive.height - roiBox.clientHeight));
+                roiBox.style.left = newLeft + 'px';
+                roiBox.style.top = newTop + 'px';
+                e.preventDefault();
+            }
+        }, { passive: false });
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+    }
+}
+
+// Gjør kraftig OCR-prosess: crop til ROI, stopp kamera, kjør Tesseract
 export async function captureAndRunOcr(video, canvas, statusElement) {
     statusElement.textContent = 'Kjører OCR…';
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+
+    // Finn ROI og kalkuler beskjæringskoordinater
+    const videoRect = video.getBoundingClientRect();
+    const roiRect = roiBox.getBoundingClientRect();
+    const scaleX = video.videoWidth / videoRect.width;
+    const scaleY = video.videoHeight / videoRect.height;
+    const sx = (roiRect.left - videoRect.left) * scaleX;
+    const sy = (roiRect.top - videoRect.top) * scaleY;
+    const sw = roiRect.width * scaleX;
+    const sh = roiRect.height * scaleY;
+
+    // Crop til ROI i canvas
+    canvas.width = sw;
+    canvas.height = sh;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
     canvas.style.display = 'block';
+
+    // Stopp kamera-strøm
     if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
     }
+
     try {
-        const result = await Tesseract.recognize(canvas, 'nor+eng');
+        const result = await Tesseract.recognize(canvas, 'nor+eng', {
+            tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
+            tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+            tessedit_char_whitelist: '0123456789ABCDEFabcdef:-'
+        });
         return result.data.text;
     } catch (err) {
         throw new Error('OCR-feil: ' + err.message);
     }
 }
 
+// Åpner camera-modal, setter opp stream, ROI og knapper
 export async function openCameraModal() {
     _showCameraModal();
     const video = document.getElementById('cameraVideo');
@@ -69,10 +171,16 @@ export async function openCameraModal() {
     const ocrBtn = document.getElementById('cameraOcrBtn');
     const cancelBtn = document.getElementById('cameraCancelBtn');
     const status = document.getElementById('cameraStatus');
+    const container = video.parentElement;
+
     status.textContent = '';
     canvas.style.display = 'none';
     ocrBtn.style.display = '';
     cancelBtn.style.display = '';
+
+    // Opprett/oppdater ROI-boks midtstilt
+    createOrUpdateRoiBox(container);
+
     try {
         cameraStream = await getAnyCameraStream();
         video.srcObject = cameraStream;
@@ -81,6 +189,7 @@ export async function openCameraModal() {
         status.textContent = 'Kunne ikke åpne kamera: ' + err.message;
         return;
     }
+
     ocrBtn.onclick = async () => {
         ocrBtn.style.display = 'none';
         try {
@@ -100,5 +209,6 @@ export async function openCameraModal() {
             ocrBtn.style.display = '';
         }
     };
+
     cancelBtn.onclick = _closeCameraModal;
 }
