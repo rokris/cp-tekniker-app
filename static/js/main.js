@@ -326,7 +326,7 @@ async function openCameraModal() {
         ocrBtn.style.display = 'none';
         try {
             const text = await captureAndRunOcr(video, canvas, status);
-            const macRegex = /(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}|[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}|(?:[0-9A-Fa-f]{2}){6}/g;
+            const macRegex = /(?:(?:[0-9A-Fa-f]{2}([:-]))(?:[0-9A-Fa-f]{2}\1){4}[0-9A-Fa-f]{2}|(?:[0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6})/g;
             const matches = text.match(macRegex);
 
             if (matches && matches.length > 0) {
