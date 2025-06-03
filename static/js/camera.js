@@ -3,6 +3,20 @@
 
 import { showCameraModal as _showCameraModal, closeCameraModal as _closeCameraModal } from './modal.js';
 
+// Funksjon for å formatere MAC-adresse til ønsket format 11-11-11-22-22-22
+function formatMacAddress(macAddress) {
+    // Fjern alle separatorer og mellomrom, behold kun hex-tegn
+    const cleanMac = macAddress.replace(/[^0-9A-Fa-f]/g, '');
+    
+    // Sjekk at vi har nøyaktig 12 tegn
+    if (cleanMac.length !== 12) {
+        return macAddress; // Returner original hvis ikke gyldig lengde
+    }
+    
+    // Formater til xx-xx-xx-xx-xx-xx format med små bokstaver
+    return cleanMac.match(/.{2}/g).join('-').toLowerCase();
+}
+
 let cameraStream = null;
 // Variabler for ROI-dragging
 let roiBox = null;
@@ -234,11 +248,12 @@ export async function openCameraModal() {
         if (fabOcrBtn) fabOcrBtn.disabled = true;
         try {
             const text = await captureAndRunOcr(video, canvas, status);
-            const macRegex = /(?:(?:[0-9-A-Fa-f]{2}([:-]))(?:[0-9-A-Fa-f]{2}\1){4}[0-9-A-Fa-f]{2}|(?:[0-9A-Fa-f]{4}\.){2}[0-9-A-Fa-f]{4}|[0-9-A-Fa-f]{6}-[0-9-A-Fa-f]{6})/g;
+            //const macRegex = /(?:(?:[0-9-A-Fa-f]{2}([:-]))(?:[0-9-A-Fa-f]{2}\1){4}[0-9-A-Fa-f]{2}|(?:[0-9A-Fa-f]{4}\.){2}[0-9-A-Fa-f]{4}|[0-9-A-Fa-f]{6}-[0-9-A-Fa-f]{6})/g;
+            const macRegex = /(?:(?:[0-9A-Fa-f]{2}([:-])(?:[0-9A-Fa-f]{2}\1){4}[0-9A-Fa-f]{2})|(?:[0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}|(?:[0-9A-Fa-f]{2}(?: [0-9A-Fa-f]{2}){5})|[0-9A-Fa-f]{12}|[0-9A-Fa-f]{6} +[0-9A-Fa-f]{6}|[0-9A-Fa-f]{6}\s*:\s*[0-9A-Fa-f]{6})/g;
             const matches = text.match(macRegex);
             if (matches && matches.length > 0) {
-                document.getElementById('macaddr').value = matches[0];
-                status.textContent = 'MAC-adresse funnet!';
+                document.getElementById('macaddr').value = formatMacAddress(matches[0]);
+                status.textContent = 'MAC-adresse funnet og formatert!';
                 document.removeEventListener('keydown', escListener);
                 cameraModal.removeEventListener('click', overlayListener);
                 setTimeout(closeCameraModal, 1000);
