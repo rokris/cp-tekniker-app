@@ -18,6 +18,7 @@
     <link rel="icon" href="/static/favicon.png" type="image/png" />
     <!-- Tailwind CSS (bygget, ikke CDN) og Lucide-ikoner for moderne UI -->
     <link href="/static/css/tailwind.output.css" rel="stylesheet">
+    <link href="/static/css/user_guide_modal.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -28,7 +29,12 @@
         <i data-lucide="laptop" class="w-5 h-5"></i>
         <span class="font-semibold text-lg">Device Manager</span>
       </div>
-      <button id="logoutBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">Logg ut</button>
+      <div class="flex items-center">
+        <button id="helpBtn" title="Brukerveiledning" class="mr-2 p-2 bg-transparent border-none focus:outline-none hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+          <i data-lucide="help-circle" class="w-6 h-6 text-indigo-700 dark:text-indigo-300"></i>
+        </button>
+        <button id="logoutBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">Logg ut</button>
+      </div>
     </nav>
 
     <!-- Toast-container: Viser tilbakemeldinger (suksess/feil) til bruker. -->
@@ -105,7 +111,7 @@
         <h2 class="text-xl font-semibold flex items-center gap-2">
           <i data-lucide="info" class="w-5 h-5"></i> Enhetsinfo
         </h2>
-        <pre id="deviceInfoPopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"></pre>
+        <pre id="deviceInfoPopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto" style="overflow-y:auto; max-height:70vh;"></pre>
       </div>
     </div>
     <!-- Modal for visning etter opprettelse av enhet. -->
@@ -114,7 +120,7 @@
         <h2 class="text-xl font-semibold flex items-center gap-2">
           <i data-lucide="check-circle" class="w-5 h-5"></i> Enhet opprettet
         </h2>
-        <pre id="createDevicePopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto"></pre>
+        <pre id="createDevicePopupContent" class="bg-gray-100 dark:bg-gray-900 p-4 rounded text-sm overflow-x-auto" style="overflow-y:auto; max-height:70vh;"></pre>
       </div>
     </div>
 
@@ -136,10 +142,34 @@
       </div>
     </div>
     <!-- Kamera-knapp, plasser denne der du ønsker å trigge kamera -->
-    <button id="cameraBtn" type="button" class="bg-blue-500 text-white px-3 py-1 rounded">Kamera</button>
+    <!-- <button id="cameraBtn" type="button" class="bg-blue-500 text-white px-3 py-1 rounded">Kamera</button> -->
+
+    <!-- Modal for brukerveiledning -->
+    <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl space-y-4 w-full max-w-3xl max-h-[90vh] relative overflow-y-auto">
+        <div id="helpContent" class="prose max-w-none overflow-y-auto" style="max-height:70vh; min-height:40vh; padding-right:1rem;"></div>
+        <div id="helpIframeError" class="hidden text-red-600 mt-2">Kunne ikke laste brukerveiledning. Prøv å åpne <a href="/static/user_guide.html" target="_blank" class="underline">denne lenken</a> direkte.</div>
+        <style>
+          #helpContent svg {
+            display: inline;
+            width: 1.2em;
+            height: 1.2em;
+            vertical-align: text-bottom;
+            margin: 0 0.2em;
+          }
+          #helpContent img {
+            max-width: 2em;
+            max-height: 2em;
+            vertical-align: middle;
+            display: inline-block;
+          }
+        </style>
+      </div>
+    </div>
 
     <!-- Laster hoved-JavaScript (ES6-modul) som binder sammen all frontend-funksjonalitet. -->
     <script type="module" src="/static/js/main.js"></script>
+    <script type="module" src="/static/js/user_guide.js"></script>
     <!-- Legg til Tesseract.js for OCR-støtte -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
   </body>

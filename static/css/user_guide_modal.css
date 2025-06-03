@@ -1,0 +1,83 @@
+/* user_guide_modal.css - Styling for brukerveiledning i modal */
+#helpContent {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 2.5rem 1.5rem;
+    line-height: 1.7;
+    color: #222;
+    background: #f8fafc;
+    min-height: 100vh;
+}
+#helpContent h1, #helpContent h2, #helpContent h3 {
+    color: #1a237e;
+    font-weight: 600;
+}
+#helpContent h1 {
+    border-bottom: 2px solid #e0e7ef;
+    padding-bottom: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 2.2rem;
+}
+#helpContent h2 {
+    margin-top: 2.5em;
+    border-bottom: 1px solid #e0e7ef;
+    padding-bottom: 6px;
+    font-size: 1.4rem;
+}
+#helpContent h3 {
+    margin-top: 1.7em;
+    font-size: 1.1rem;
+}
+#helpContent p, #helpContent ul, #helpContent ol, #helpContent blockquote {
+    margin-bottom: 1.1em;
+}
+#helpContent ul, #helpContent ol {
+    padding-left: 1.5em;
+}
+#helpContent li {
+    margin: 0.4em 0;
+}
+#helpContent code {
+    background-color: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 0.98em;
+}
+#helpContent blockquote {
+    margin: 1.2em 0;
+    padding: 0.7em 1.2em;
+    border-left: 4px solid #90caf9;
+    background: #f5faff;
+    color: #374151;
+    border-radius: 0 8px 8px 0;
+}
+#helpContent img {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 5px;
+    max-width: 1.5em;
+}
+#helpContent hr {
+    border: none;
+    border-top: 1px solid #e0e7ef;
+    margin: 2.5em 0 2em 0;
+}
+#helpContent .section-list {
+    background: #e3eafc;
+    border-radius: 8px;
+    padding: 1em 1.5em;
+    margin-bottom: 2em;
+}
+@media (max-width: 600px) {
+    #helpContent {
+        padding: 1rem 0.2rem;
+    }
+    #helpContent h1 {
+        font-size: 1.3rem;
+    }
+    #helpContent h2 {
+        font-size: 1.1rem;
+    }
+}

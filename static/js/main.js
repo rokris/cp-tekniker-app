@@ -229,7 +229,8 @@ function isAnyModalVisible() {
         document.getElementById('loginModal'),
         document.getElementById('deviceInfoModal'),
         document.getElementById('createDeviceModal'),
-        document.getElementById('cameraModal')
+        document.getElementById('cameraModal'),
+        document.getElementById('helpModal') // Legg til helpModal her
     ].some(modal => modal && !modal.classList.contains('hidden'));
 }
 
@@ -241,7 +242,7 @@ function updateCreateDeviceBtnVisibility() {
 }
 
 // Kall denne funksjonen når modaler vises/skjules
-['loginModal', 'deviceInfoModal', 'createDeviceModal', 'cameraModal'].forEach(id => {
+['loginModal', 'deviceInfoModal', 'createDeviceModal', 'cameraModal', 'helpModal'].forEach(id => {
     const modal = document.getElementById(id);
     if (modal) {
         const observer = new MutationObserver(updateCreateDeviceBtnVisibility);
