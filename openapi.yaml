@@ -176,6 +176,50 @@ paths:
         '500':
           description: Feil ved opprettelse av enhet
 
+  /update_device:
+    patch:
+      summary: Oppdater enhet
+      description: Oppdater eksisterende enhet (krever innlogging).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mac:
+                  type: string
+                  description: MAC-adresse (påkrevd for identifikasjon)
+                role_id:
+                  type: string
+                  description: Rolle-ID
+                enabled:
+                  type: boolean
+                visitor_name:
+                  type: string
+                expire_time:
+                  type: integer
+                  description: Unix-tid (sekunder)
+                sponsor_name:
+                  type: string
+                sponsor_profile:
+                  type: string
+      responses:
+        '200':
+          description: Enhet oppdatert
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Manglende eller ugyldige felt
+        '401':
+          description: Ikke autentisert
+        '404':
+          description: Enhet ikke funnet
+        '500':
+          description: Feil ved oppdatering av enhet
+
   /GetDeviceRoles:
     get:
       summary: Hent tillatte enhetsroller

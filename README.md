@@ -19,6 +19,27 @@ En moderne, sikker og brukervennlig enhetsadministrasjonsløsning for NorgesGrup
 
 ---
 
+## Frontend-utvikling
+
+For å jobbe med frontend-delen av applikasjonen trenger du Node.js installert. Prosjektet bruker Tailwind CSS for styling.
+
+### Installasjon av npm-pakker
+
+```bash
+npm install
+```
+
+### Bygging av CSS
+
+For å bygge CSS-filene én gang:
+```bash
+npm run build:css
+```
+
+Dette vil generere den optimaliserte CSS-filen i `static/css/tailwind.output.css`.
+
+---
+
 ## Ny mappe- og modulstruktur
 
 ```
@@ -29,15 +50,14 @@ requirements.txt        # Python-avhengigheter
 Dockerfile              # Docker-byggeinstruksjoner
 supervisord.conf        # Kjører Redis og Flask-app i samme container
 
-auth/                   # Autentisering og rate limiting
-    limiter.py          # Flask-Limiter setup (Redis)
-    routes.py           # Auth-endepunkter (Blueprint)
-    utils.py            # Auth-hjelpefunksjoner
-
-clearpass/              # ClearPass API og rollelogikk
-    api.py              # API-kall og device-endepunkter (Blueprint)
-    roles.py            # Rolle- og domenehåndtering
-    routes.py           # Rolle-endepunkt (Blueprint)
+certs/                 # SSL/HTTPS sertifikater for hoved-applikasjonen
+clearpass/             # ClearPass API og rollelogikk
+    api.py             # API-kall og device-endepunkter (Blueprint)
+    roles.py           # Rolle- og domenehåndtering
+    routes.py          # Rolle-endepunkt (Blueprint)
+    certs/            # SSL/HTTPS sertifikater for ClearPass API-kommunikasjon
+        fullchain.pem  # Fullkjede sertifikat
+        privkey.pem    # Privat nøkkel
 
 utils/
     redis.py            # Redis-klient
@@ -141,9 +161,9 @@ static/
 3. **Bygg og start med Docker:**
    ```sh
    docker build -t cp-tekniker-app .
-   docker run -p 8000:8000 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json cp-tekniker-app
+   docker run -d -p 443:443 --env-file .env -v $(pwd)/approved_domains.json:/app/approved_domains.json -v $(pwd)/clearpass/certs:/certs:ro cp-tekniker-app
    ```
-   Appen er tilgjengelig på [http://localhost:8000](http://localhost:8000)
+   Appen er tilgjengelig på [https://localhost](https://localhost)
 
 ---
 

@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, session, current_app as app
 import requests
 from datetime import datetime, timedelta
 from config import Config
+from auth.limiter import limiter
 
 # Token cache for å unngå unødvendige token-forespørsler
 token_cache = {"token": None, "expiry": None}
@@ -68,7 +69,23 @@ def create_device(payload):
         app.logger.error(f"API-forespørsel feilet: {e}")
         return None, "Kunne ikke opprette enhet."
 
+def update_device(macaddr, payload):
+    """Oppdaterer enhet i ClearPass basert på MAC-adresse og gitt payload."""
+    token = get_cached_token()
+    if not token:
+        return None, "Autentisering feilet."
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    api_url = f"{Config.BASE_URL}/api/device/mac/{macaddr}"
+    try:
+        resp = requests.patch(api_url, headers=headers, json=payload)
+        resp.raise_for_status()
+        return resp.json(), None
+    except Exception as e:
+        app.logger.error(f"API-forespørsel feilet: {e}")
+        return None, "Kunne ikke oppdatere enhet."
+
 @bp.route('/get_device_info', methods=['GET'])
+@limiter.limit("20 per minute")
 def device_info_route():
     """API-endepunkt for å hente enhetsinfo (krever innlogging)."""
     if not session.get("logged_in") or not session.get("session_token"):
@@ -82,6 +99,7 @@ def device_info_route():
     return jsonify(device_info)
 
 @bp.route('/create_device', methods=['POST'])
+@limiter.limit("10 per minute")
 def create_device_route():
     """API-endepunkt for å opprette enhet (krever innlogging)."""
     if not session.get("logged_in") or not session.get("session_token"):
@@ -94,3 +112,20 @@ def create_device_route():
     if error:
         return jsonify({"error": error}), 500
     return jsonify(device), 201
+
+@bp.route('/update_device', methods=['PATCH'])
+@limiter.limit("10 per minute")
+def update_device_route():
+    """API-endepunkt for å oppdatere enhet (krever innlogging)."""
+    if not session.get("logged_in") or not session.get("session_token"):
+        return jsonify({"error": "Autentisering kreves."}), 401
+    payload = request.json
+    macaddr = payload.get("mac")
+    if not macaddr:
+        return jsonify({"error": "MAC-adresse er påkrevd."}), 400
+    patch_payload = dict(payload)
+    patch_payload.pop("mac", None)
+    device, error = update_device(macaddr, patch_payload)
+    if error:
+        return jsonify({"error": error}), 500
+    return jsonify(device)
