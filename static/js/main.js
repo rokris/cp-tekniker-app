@@ -26,13 +26,19 @@ window.cancelEdits = function () {
     const d = lastFetchedDeviceInfo;
     document.getElementById("roleDropdown").value = d.role_id || "";
     document.getElementById("visitorName").value = d.visitor_name || "";
-    if (d.expire_time) {
-        const dt = new Date(d.expire_time * 1000);
-        const pad = n => n.toString().padStart(2, '0');
-        document.getElementById("expireTime").value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-    } else {
-        document.getElementById("expireTime").value = "";
+    document.getElementById("virksomhetsId").value = d.vid || "";
+    
+    // REMARK: Utløpsdato håndteres kun hvis feltet er aktivert
+    if (window.SHOW_EXPIRE_DATE_FIELD) {
+        if (d.expire_time) {
+            const dt = new Date(d.expire_time * 1000);
+            const pad = n => n.toString().padStart(2, '0');
+            document.getElementById("expireTime").value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        } else {
+            document.getElementById("expireTime").value = "";
+        }
     }
+    
     document.getElementById("enabledCheckbox").checked = typeof d.enabled != "undefined" ? !!d.enabled : true;
     document.getElementById("sponsorName").value = d.sponsor_name || "";
     setDefaultActionButtons(() => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons), () => createDevice(showToast, showCreateDeviceModal, disableButtons));
@@ -132,7 +138,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('logoutBtn').addEventListener('click', () => logout((loggedIn) => setLoggedIn(loggedIn, fetchDeviceRoles), showToast));
     document.getElementById('getDeviceInfoBtn').addEventListener('click', () => getDeviceInfo(showToast, resetFieldsToDefault, showDeviceInfoModal, disableButtons));
     // Ikke legg til createDeviceBtn her, FAB håndteres av setDefaultActionButtons
-    ["roleDropdown", "visitorName", "expireTime", "enabledCheckbox"].forEach(id => {
+    // REMARK: Utløpsdato-felt inkluderes kun hvis SHOW_EXPIRE_DATE_FIELD er true
+    const fieldsToMonitor = ["roleDropdown", "visitorName", "virksomhetsId", "enabledCheckbox"];
+    if (window.SHOW_EXPIRE_DATE_FIELD) {
+        fieldsToMonitor.push("expireTime");
+    }
+    
+    fieldsToMonitor.forEach(id => {
         const el = document.getElementById(id);
         if (el.tagName === 'SELECT' || el.type === 'checkbox') {
             el.addEventListener("change", () => {

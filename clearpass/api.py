@@ -5,6 +5,7 @@ Eksponerer relevante API-endepunkter via Flask Blueprint.
 """
 from flask import Blueprint, request, jsonify, session, current_app as app
 import requests
+import re
 from datetime import datetime, timedelta
 from config import Config
 from auth.limiter import limiter
@@ -13,6 +14,12 @@ from auth.limiter import limiter
 token_cache = {"token": None, "expiry": None}
 
 bp = Blueprint('clearpass_api', __name__)
+
+def _validate_vid_format(vid):
+    """Validerer VirksomhetsID format: 2 bokstaver + 5 tall."""
+    if not vid:
+        return True  # Tom verdi er tillatt
+    return bool(re.match(r'^[0-9]{5}$', vid))
 
 def get_cached_token():
     """Henter og cacher access token fra ClearPass API."""
@@ -108,6 +115,12 @@ def create_device_route():
     required_fields = ["mac", "role_id"]
     if not payload or any(f not in payload for f in required_fields):
         return jsonify({"error": f"Påkrevde felt mangler: {required_fields}"}), 400
+    
+    # Valider VirksomhetsID format hvis det er oppgitt
+    vid = payload.get("vid", "")
+    if vid and not _validate_vid_format(vid):
+        return jsonify({"error": "VirksomhetsID må være 2 bokstaver fulgt av 5 tall (f.eks. AB12345)."}), 400
+    
     device, error = create_device(payload)
     if error:
         return jsonify({"error": error}), 500
@@ -123,6 +136,12 @@ def update_device_route():
     macaddr = payload.get("mac")
     if not macaddr:
         return jsonify({"error": "MAC-adresse er påkrevd."}), 400
+    
+    # Valider VirksomhetsID format hvis det er oppgitt
+    vid = payload.get("vid", "")
+    if vid and not _validate_vid_format(vid):
+        return jsonify({"error": "VirksomhetsID må være 2 bokstaver fulgt av 5 tall (f.eks. AB12345)."}), 400
+    
     patch_payload = dict(payload)
     patch_payload.pop("mac", None)
     device, error = update_device(macaddr, patch_payload)
