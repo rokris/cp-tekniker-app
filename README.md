@@ -38,6 +38,27 @@ npm run build:css
 
 Dette vil generere den optimaliserte CSS-filen i `static/css/tailwind.output.css`.
 
+### Konfigurasjon av Utløpsdato-felt
+
+Applikasjonen har mulighet til å skjule/vise Utløpsdato-feltet i brukergrensesnittet uten å påvirke backend-funksjonaliteten.
+
+**Aktivering/deaktivering:**
+
+I `templates/index.html` (rundt linje 25) finner du denne konfigurasjonen:
+
+```javascript
+window.SHOW_EXPIRE_DATE_FIELD = false; // REMARK: Sett til true for å aktivere Utløpsdato-feltet igjen
+```
+
+- **`false`**: Utløpsdato-feltet er skjult fra brukergrensesnittet
+- **`true`**: Utløpsdato-feltet vises og er fullt funksjonelt
+
+**Viktige egenskaper:**
+- All backend-funksjonalitet bevares uavhengig av innstilling
+- API-kall inkluderer fortsatt `expire_time` (settes til 0 når feltet er skjult)
+- Enkelt å aktivere/deaktivere ved å endre én variabel
+- Godt merket med REMARK-kommentarer for enkel gjenfinning
+
 ---
 
 ## Ny mappe- og modulstruktur
