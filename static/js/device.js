@@ -3,6 +3,18 @@
 // Håndterer henting av roller, enhetsinformasjon og opprettelse av enhet.
 
 /**
+ * Validerer VirksomhetsID format (5 tall).
+ * @param {string} vid - VirksomhetsID som skal valideres.
+ * @returns {string|null} - Feilmelding eller null hvis gyldig.
+ */
+function validateVirksomhetsId(vid) {
+    if (vid && !/^[0-9]{5}$/.test(vid)) {
+        return "VirksomhetsID må være 5 tall (f.eks. 12345).";
+    }
+    return null;
+}
+
+/**
  * Status for om enhetsinfo er hentet.
  * @type {boolean}
  */
@@ -168,9 +180,10 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
         showToast("Feltet 'Enhetsnavn' og 'MAC-adresse må fylles ut.", "error");
         return;
     }
-    // Valider VirksomhetsID format hvis det er fylt ut
-    if (vid && !/^[A-Za-z]{2}[0-9]{5}$/.test(vid)) {
-        showToast("VirksomhetsID må være 2 bokstaver fulgt av 5 tall (f.eks. AB12345).", "error");
+    // Valider VirksomhetsID format
+    const vidError = validateVirksomhetsId(vid);
+    if (vidError) {
+        showToast(vidError, "error");
         return;
     }
     const expireInput = window.SHOW_EXPIRE_DATE_FIELD ? document.getElementById("expireTime").value : "";
@@ -220,9 +233,10 @@ export async function updateDevice(showToast, disableButtons) {
         disableButtons(["saveFabBtn", "cancelFabBtn"], false);
         return null;
     }
-    // Valider VirksomhetsID format hvis det er fylt ut
-    if (vid && !/^[A-Za-z]{2}[0-9]{5}$/.test(vid)) {
-        showToast("VirksomhetsID må være 2 bokstaver fulgt av 5 tall (f.eks. AB12345).", "error");
+    // Valider VirksomhetsID format
+    const vidError = validateVirksomhetsId(vid);
+    if (vidError) {
+        showToast(vidError, "error");
         disableButtons(["saveFabBtn", "cancelFabBtn"], false);
         return null;
     }
