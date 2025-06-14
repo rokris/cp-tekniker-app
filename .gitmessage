@@ -1,0 +1,22 @@
+# <type>: <beskrivelse på norsk>
+#
+# Typer:
+# feat:     Ny funksjonalitet
+# fix:      Feilretting
+# docs:     Dokumentasjon
+# style:    Formatering, manglende semikolon, etc; ingen kodeendring
+# refactor: Refaktorering av produksjons kode
+# test:     Legge til tester, refaktorering av test; ingen produksjon kode endring
+# chore:    Oppdatere build oppgaver, pakkemanager konfigurasjon; ingen produksjon kode endring
+#
+# Husk:
+# - Bruk imperativ form: "Legg til" ikke "Lagt til" eller "Legger til"
+# - Begrens første linje til 50 tegn eller mindre
+# - Referer til issues og pull requests etter første linje
+# - Skriv på norsk
+#
+# Eksempler på gode commit-meldinger:
+# feat: Legg til støtte for utløpsdato i enhetsregistrering
+# fix: Rett feil i VirksomhetsID-validering
+# docs: Oppdater README med installasjonsinstruksjoner
+# refactor: Fjern duplisert validering av VirksomhetsID

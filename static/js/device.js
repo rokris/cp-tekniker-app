@@ -3,6 +3,18 @@
 // Håndterer henting av roller, enhetsinformasjon og opprettelse av enhet.
 
 /**
+ * Validerer VirksomhetsID format (5 tall).
+ * @param {string} vid - VirksomhetsID som skal valideres.
+ * @returns {string|null} - Feilmelding eller null hvis gyldig.
+ */
+function validateVirksomhetsId(vid) {
+    if (vid && !/^[0-9]{5}$/.test(vid)) {
+        return "VirksomhetsID må være 5 tall (f.eks. 12345).";
+    }
+    return null;
+}
+
+/**
  * Status for om enhetsinfo er hentet.
  * @type {boolean}
  */
@@ -80,13 +92,17 @@ export async function getDeviceInfo(showToast, resetFieldsToDefault, showDeviceI
                 dropdown.value = data.role_id || (dropdown.options.length > 0 ? dropdown.options[0].value : "");
             }
             document.getElementById("visitorName").value = data.visitor_name || "";
-            if (data.expire_time) {
+            document.getElementById("virksomhetsId").value = data.vid || "";
+            
+            // REMARK: Utløpsdato håndteres kun hvis feltet er aktivert
+            if (window.SHOW_EXPIRE_DATE_FIELD && data.expire_time) {
                 const dt = new Date(data.expire_time * 1000);
                 const pad = n => n.toString().padStart(2, '0');
                 document.getElementById("expireTime").value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-            } else {
+            } else if (window.SHOW_EXPIRE_DATE_FIELD) {
                 document.getElementById("expireTime").value = "";
             }
+            
             document.getElementById("enabledCheckbox").checked = typeof data.enabled !== "undefined" ? !!data.enabled : true;
             document.getElementById("sponsorName").value = data.sponsor_name || "";
             infoFetched = true;
@@ -112,10 +128,21 @@ export async function getDeviceInfo(showToast, resetFieldsToDefault, showDeviceI
 export function setDeviceFieldsReadonly(readonly) {
     document.getElementById("roleDropdown").disabled = readonly;
     document.getElementById("visitorName").readOnly = readonly;
-    document.getElementById("expireTime").readOnly = readonly;
+    document.getElementById("virksomhetsId").readOnly = readonly;
+    
+    // REMARK: Utløpsdato håndteres kun hvis feltet er aktivert
+    if (window.SHOW_EXPIRE_DATE_FIELD) {
+        document.getElementById("expireTime").readOnly = readonly;
+    }
+    
     document.getElementById("enabledCheckbox").disabled = readonly;
+    
     // Hindrer Endre-modus ved input hvis readonly
-    const actionFields = ["roleDropdown", "visitorName", "expireTime", "enabledCheckbox"];
+    const actionFields = ["roleDropdown", "visitorName", "virksomhetsId", "enabledCheckbox"];
+    if (window.SHOW_EXPIRE_DATE_FIELD) {
+        actionFields.push("expireTime");
+    }
+    
     actionFields.forEach(id => {
         const el = document.getElementById(id);
         if (readonly) {
@@ -148,15 +175,23 @@ export async function createDevice(showToast, showCreateDeviceModal, disableButt
     const role_id = document.getElementById("roleDropdown").value;
     const enabled = document.getElementById("enabledCheckbox").checked;
     const visitor_name = document.getElementById("visitorName").value.trim();
+    const vid = document.getElementById("virksomhetsId").value.trim();
     if (!visitor_name || !mac) {
         showToast("Feltet 'Enhetsnavn' og 'MAC-adresse må fylles ut.", "error");
         return;
     }
-    const expireInput = document.getElementById("expireTime").value;
+    // Valider VirksomhetsID format
+    const vidError = validateVirksomhetsId(vid);
+    if (vidError) {
+        showToast(vidError, "error");
+        return;
+    }
+    const expireInput = window.SHOW_EXPIRE_DATE_FIELD ? document.getElementById("expireTime").value : "";
     const sponsor_name = window.loggedInEmail || "";
     const sponsor_profile = "1";
     const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
-    const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
+    // REMARK: expire_time settes til 0 hvis Utløpsdato-feltet er skjult eller tomt
+    const payload = { mac, role_id, enabled, visitor_name, vid, expire_time, sponsor_name, sponsor_profile };
     showToast("Sender...");
     disableButtons(["createDeviceBtn", "getDeviceInfoBtn"]);
     try {
@@ -192,19 +227,28 @@ export async function updateDevice(showToast, disableButtons) {
     const dropdown = document.getElementById("roleDropdown");
     const selectedOpt = dropdown.options[dropdown.selectedIndex];
     const visitor_name = document.getElementById("visitorName").value.trim();
+    const vid = document.getElementById("virksomhetsId").value.trim();
     if (!visitor_name) {
         showToast("Feltet 'Enhetsnavn' må fylles ut.", "error");
+        disableButtons(["saveFabBtn", "cancelFabBtn"], false);
+        return null;
+    }
+    // Valider VirksomhetsID format
+    const vidError = validateVirksomhetsId(vid);
+    if (vidError) {
+        showToast(vidError, "error");
         disableButtons(["saveFabBtn", "cancelFabBtn"], false);
         return null;
     }
     const mac = document.getElementById("macaddr").value.trim();
     const role_id = document.getElementById("roleDropdown").value;
     const enabled = document.getElementById("enabledCheckbox").checked;
-    const expireInput = document.getElementById("expireTime").value;
+    const expireInput = window.SHOW_EXPIRE_DATE_FIELD ? document.getElementById("expireTime").value : "";
     const sponsor_name = window.loggedInEmail || "";
     const sponsor_profile = "1";
     const expire_time = expireInput ? Math.floor(new Date(expireInput).getTime() / 1000) : 0;
-    const payload = { mac, role_id, enabled, visitor_name, expire_time, sponsor_name, sponsor_profile };
+    // REMARK: expire_time settes til 0 hvis Utløpsdato-feltet er skjult eller tomt
+    const payload = { mac, role_id, enabled, visitor_name, vid, expire_time, sponsor_name, sponsor_profile };
     showToast("Lagrer endringer...");
     disableButtons(["saveFabBtn", "cancelFabBtn"]);
     try {
